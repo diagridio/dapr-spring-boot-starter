@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.context.ImportTestcontainers;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
@@ -11,6 +12,7 @@ import io.dapr.client.domain.State;
 
 @SpringBootTest
 @ImportTestcontainers(DaprLocal.class)
+@Testcontainers
 public class DaprLocalTest {
 
 
