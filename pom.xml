@@ -24,6 +24,16 @@
 		<maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
 		<jreleaser.version>1.8.0</jreleaser.version>
 	</properties>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 	<dependencies>
         <dependency>
             <groupId>io.dapr</groupId>
@@ -44,9 +54,6 @@
 			<artifactId>spring-boot-starter-test</artifactId>
     	</dependency>
 	</dependencies>
-<<<<<<< Updated upstream
-
-=======
 	<profiles>
         <profile>
             <id>release</id>
@@ -93,7 +100,7 @@
                                         <nexus2>
                                             <maven-central>
                                                 <active>ALWAYS</active>
-                                                <url>https://oss.sonatype.org/service/local</url>
+                                                <url>https://s01.oss.sonatype.org/service/local</url>
                                                 <snapshotUrl>https://s01.oss.sonatype.org/content/repositories/snapshots</snapshotUrl>
                                                 <closeRepository>true</closeRepository>
                                                 <releaseRepository>true</releaseRepository>
@@ -109,6 +116,4 @@
             </build>
         </profile>
     </profiles>
->>>>>>> Stashed changes
-
 </project>
