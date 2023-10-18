@@ -10,11 +10,19 @@
 	</parent>
 	<groupId>io.diagrid.dapr</groupId>
 	<artifactId>spring-boot-starter-dapr</artifactId>
-	<version>1.10.0</version>
+	<version>0.10.0</version>
 	<name>Spring Boot :: Dapr Starter</name>
 	<description>Spring Boot :: Dapr Starter</description>
 	<properties>
-		<java.version>17</java.version>
+		<java.version>8</java.version>
+		<snakeyaml.version>1.33</snakeyaml.version>
+		<testcontainers.version>1.19.1</testcontainers.version>
+		<daprsdk.version>1.10.0</daprsdk.version>
+		<testcontainers-dapr.version>0.10.0</testcontainers-dapr.version>
+		<logback-classic.version>1.4.11</logback-classic.version>
+		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+		<maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
+		<jreleaser.version>1.8.0</jreleaser.version>
 	</properties>
 	<distributionManagement>
 		<snapshotRepository>
@@ -30,13 +38,17 @@
         <dependency>
             <groupId>io.dapr</groupId>
             <artifactId>dapr-sdk-springboot</artifactId>
-            <version>1.10.0</version>
+            <version>${daprsdk.version}</version>
         </dependency>
 		<dependency>
-			<groupId>io.diagrid.dapr</groupId>
-			<artifactId>testcontainers-dapr</artifactId>
-			<version>1.10.0</version>
-		</dependency>
+            <groupId>io.diagrid.dapr</groupId>
+            <artifactId>testcontainers-dapr</artifactId>
+            <version>${testcontainers-dapr.version}</version>
+        </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+		</dependency>	
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -76,7 +88,7 @@
                     <plugin>
                         <groupId>org.jreleaser</groupId>
                         <artifactId>jreleaser-maven-plugin</artifactId>
-                        <version>1.6.0</version>
+                        <version>${jreleaser.version}</version>
                         <configuration>
                             <jreleaser>
                                 <signing>
@@ -88,9 +100,8 @@
                                         <nexus2>
                                             <maven-central>
                                                 <active>ALWAYS</active>
-                                                <url>https://oss.sonatype.org/service/local</url>
-                                                <snapshotUrl>https://oss.sonatype.org/content/repositories/snapshots/
-                                                </snapshotUrl>
+                                                <url>https://s01.oss.sonatype.org/service/local</url>
+                                                <snapshotUrl>https://s01.oss.sonatype.org/content/repositories/snapshots</snapshotUrl>
                                                 <closeRepository>true</closeRepository>
                                                 <releaseRepository>true</releaseRepository>
                                                 <stagingRepositories>target/staging-deploy</stagingRepositories>
@@ -105,5 +116,4 @@
             </build>
         </profile>
     </profiles>
-
 </project>
