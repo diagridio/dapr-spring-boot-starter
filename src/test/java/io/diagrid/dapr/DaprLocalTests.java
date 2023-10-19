@@ -1,9 +1,8 @@
 package io.diagrid.dapr;
 
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.context.ImportTestcontainers;
 
 import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
@@ -12,8 +11,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest (classes=MyTestApplication.class)
 @Testcontainers
-@ImportTestcontainers(DaprLocal.class)
-public class DaprLocalTest {
+public class DaprLocalTests {
 
     private String STATE_STORE_NAME = "statestore";
     private String KEY = "my-key";  
