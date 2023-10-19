@@ -98,8 +98,14 @@
                         <groupId>org.jreleaser</groupId>
                         <artifactId>jreleaser-maven-plugin</artifactId>
                         <version>${jreleaser.version}</version>
-                        <configuration>
+                         <configuration>
                             <jreleaser>
+								<project>
+									<description>Dapr Spring Boot Starter</description>
+									<copyright>2023 Diagrid.io</copyright>
+									<authors>Mauricio Salatino</authors>
+									<license>APACHE-2.0</license>
+								</project>
                                 <signing>
                                     <active>ALWAYS</active>
                                     <armored>true</armored>
