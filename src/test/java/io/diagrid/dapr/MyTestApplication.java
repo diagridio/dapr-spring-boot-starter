@@ -7,9 +7,8 @@ import org.springframework.boot.testcontainers.context.ImportTestcontainers;
 @SpringBootApplication
 public class MyTestApplication {
     public static void main(String[] args) {
-        SpringApplication.from(DaprApplication::main)
-            .with(DaprTestConfiguration.class)
-            .run(args);
+        SpringApplication.run(MyTestApplication.class, args);
+            
     }
 
     @ImportTestcontainers(DaprLocal.class)
