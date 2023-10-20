@@ -13,6 +13,31 @@
 	<version>0.10.0</version>
 	<name>Spring Boot :: Dapr Starter</name>
 	<description>Spring Boot :: Dapr Starter</description>
+	<packaging>jar</packaging>
+	<url>https://github.com/diagridio/spring-boot-starter-dapr</url>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Mauricio Salatino</name>
+            <email>salaboy@gmail.com</email>
+			<organization>Diagrid</organization>
+            <organizationUrl>https://www.diagrid.io</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/diagridio/spring-boot-starter-dapr.git</connection>
+        <developerConnection>scm:git:https://github.com/diagridio/spring-boot-starter-dapr.git</developerConnection>
+        <url>https://github.com/diagridio/spring-boot-starter-dapr</url>
+        <tag>main</tag>
+    </scm>
 	<properties>
 		<java.version>8</java.version>
 		<snakeyaml.version>1.33</snakeyaml.version>
