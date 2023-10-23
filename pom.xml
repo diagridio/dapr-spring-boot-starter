@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>io.diagrid.dapr</groupId>
-	<artifactId>spring-boot-starter-dapr</artifactId>
+	<artifactId>dapr-spring-boot-starter</artifactId>
 	<version>0.10.0</version>
 	<name>Spring Boot :: Dapr Starter</name>
 	<description>Spring Boot :: Dapr Starter</description>

@@ -9,8 +9,8 @@ If you are using Spring Boot, to get started with Dapr you just need to add the 
 ```xml
     <dependency>
         <groupId>io.diagrid.dapr</groupId>
-        <artifactId>spring-boot-starter-dapr</artifactId>
-        <version>1.10.0</version>
+        <artifactId>dapr-spring-boot-starter</artifactId>
+        <version>0.10.0</version>
     </dependency>    
 ```
 
