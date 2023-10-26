@@ -13,6 +13,7 @@ public interface DaprLocal {
     @DynamicPropertySource
     static void daprProperties(DynamicPropertyRegistry registry) {
         System.setProperty("dapr.grpc.port", Integer.toString(dapr.getGRPCPort()));
+        System.setProperty("dapr.http.port", Integer.toString(dapr.getHTTPPort()));
     }
     
 }
