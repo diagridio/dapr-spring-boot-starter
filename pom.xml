@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>io.diagrid.dapr</groupId>
 	<artifactId>dapr-spring-boot-starter</artifactId>
-	<version>0.10.3</version>
+	<version>0.10.4</version>
 	<name>Spring Boot :: Dapr Starter</name>
 	<description>Spring Boot :: Dapr Starter</description>
 	<packaging>jar</packaging>
@@ -43,7 +43,7 @@
 		<snakeyaml.version>1.33</snakeyaml.version>
 		<testcontainers.version>1.19.1</testcontainers.version>
 		<daprsdk.version>1.10.0</daprsdk.version>
-		<testcontainers-dapr.version>0.10.6</testcontainers-dapr.version>
+		<testcontainers-dapr.version>0.10.7</testcontainers-dapr.version>
 		<logback-classic.version>1.4.11</logback-classic.version>
 		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
 		<maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
