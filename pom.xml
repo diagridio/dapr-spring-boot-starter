@@ -43,7 +43,8 @@
 		<snakeyaml.version>1.33</snakeyaml.version>
 		<testcontainers.version>1.19.1</testcontainers.version>
 		<daprsdk.version>1.10.0</daprsdk.version>
-		<testcontainers-dapr.version>0.10.7</testcontainers-dapr.version>
+        <dapr-workflows-sdk.version>0.10.0</dapr-workflows-sdk.version>
+		<testcontainers-dapr.version>0.10.8</testcontainers-dapr.version>
 		<logback-classic.version>1.4.11</logback-classic.version>
 		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
 		<maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
@@ -64,6 +65,11 @@
             <groupId>io.dapr</groupId>
             <artifactId>dapr-sdk-springboot</artifactId>
             <version>${daprsdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dapr</groupId>
+            <artifactId>dapr-sdk-workflows</artifactId>
+            <version>${dapr-workflows-sdk.version}</version>
         </dependency>
 		<dependency>
             <groupId>io.diagrid.dapr</groupId>
