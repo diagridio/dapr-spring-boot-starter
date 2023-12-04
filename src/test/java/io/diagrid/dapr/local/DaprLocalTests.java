@@ -1,4 +1,4 @@
-package io.diagrid.dapr;
+package io.diagrid.dapr.local;
 
 import static org.junit.Assert.*;
 
@@ -14,6 +14,7 @@ import io.dapr.client.DaprClientBuilder;
 import io.dapr.client.domain.CloudEvent;
 import io.dapr.client.domain.Metadata;
 import io.dapr.client.domain.State;
+
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
@@ -21,7 +22,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 public class DaprLocalTests {
 
-    private String STATE_STORE_NAME = "statestore";
+    private String STATE_STORE_NAME = "kvstore";
     private String KEY = "my-key";  
     private String PUB_SUB_NAME = "pubsub";
     private String PUB_SUB_TOPIC_NAME = "topic";

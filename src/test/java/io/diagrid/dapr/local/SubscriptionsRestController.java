@@ -1,4 +1,4 @@
-package io.diagrid.dapr;
+package io.diagrid.dapr.local;
 
 import java.util.ArrayList;
 import java.util.List;
