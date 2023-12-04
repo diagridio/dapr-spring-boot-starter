@@ -1,4 +1,4 @@
-package io.diagrid.dapr;
+package io.diagrid.dapr.local;
 
 import static org.junit.Assert.*;
 
@@ -14,6 +14,7 @@ import io.dapr.client.DaprClientBuilder;
 import io.dapr.client.domain.CloudEvent;
 import io.dapr.client.domain.Metadata;
 import io.dapr.client.domain.State;
+
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
