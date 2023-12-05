@@ -1,4 +1,4 @@
-package io.diagrid.dapr.local;
+package io.diagrid.dapr.profiles.basic;
 
 import static org.junit.Assert.*;
 
@@ -20,7 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest (classes=MyTestApplication.class, webEnvironment = WebEnvironment.DEFINED_PORT)
 @Testcontainers
-public class DaprLocalTests {
+public class DaprBasicProfileTests {
 
     private String STATE_STORE_NAME = "kvstore";
     private String KEY = "my-key";  

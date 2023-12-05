@@ -1,17 +1,19 @@
-package io.diagrid.dapr.local;
+package io.diagrid.dapr.profiles.full;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.testcontainers.context.ImportTestcontainers;
 
-@SpringBootApplication
-public class MyTestApplication {
+import io.diagrid.dapr.profiles.DaprFullProfile;
+
+@SpringBootApplication()
+public class MyTestWithWorkflowsApplication {
     public static void main(String[] args) {
-        SpringApplication.run(MyTestApplication.class, args);
+        SpringApplication.run(MyTestWithWorkflowsApplication.class, args);
             
     }
 
-    @ImportTestcontainers(DaprLocal.class)
+    @ImportTestcontainers(DaprFullProfile.class)
     static class DaprTestConfiguration {
        
     }

@@ -1,4 +1,4 @@
-package io.diagrid.dapr.workflow;
+package io.diagrid.dapr.profiles.full;
 
 import java.util.List;
 

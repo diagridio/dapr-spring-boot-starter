@@ -44,7 +44,7 @@
 		<testcontainers.version>1.19.1</testcontainers.version>
 		<daprsdk.version>1.10.0</daprsdk.version>
         <dapr-workflows-sdk.version>0.10.0</dapr-workflows-sdk.version>
-		<testcontainers-dapr.version>0.10.10</testcontainers-dapr.version>
+		<testcontainers-dapr.version>0.10.11</testcontainers-dapr.version>
 		<logback-classic.version>1.4.11</logback-classic.version>
 		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
 		<maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
