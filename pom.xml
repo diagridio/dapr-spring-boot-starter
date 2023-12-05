@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>io.diagrid.dapr</groupId>
 	<artifactId>dapr-spring-boot-starter</artifactId>
-	<version>0.10.5</version>
+	<version>0.10.6</version>
 	<name>Spring Boot :: Dapr Starter</name>
 	<description>Spring Boot :: Dapr Starter</description>
 	<packaging>jar</packaging>
