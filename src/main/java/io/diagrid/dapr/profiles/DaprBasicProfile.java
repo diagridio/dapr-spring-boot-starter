@@ -1,4 +1,4 @@
-package io.diagrid.dapr.local;
+package io.diagrid.dapr.profiles;
 
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -7,7 +7,7 @@ import org.testcontainers.junit.jupiter.Container;
 
 import io.diagrid.dapr.DaprContainer;
 
-public interface DaprLocal {
+public interface DaprBasicProfile {
     
     @Container
     DaprContainer dapr = new DaprContainer("daprio/daprd")

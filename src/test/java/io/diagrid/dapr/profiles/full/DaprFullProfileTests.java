@@ -1,9 +1,6 @@
-package io.diagrid.dapr.workflow;
+package io.diagrid.dapr.profiles.full;
 
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest(classes = MyTestWithWorkflowsApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @Testcontainers
-public class DaprLocalWithWorkflowsTests {
+public class DaprFullProfileTests {
 
     @Autowired()
     private SubscriptionsRestController subscriptionsRestController;

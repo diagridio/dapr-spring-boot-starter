@@ -1,4 +1,4 @@
-package io.diagrid.dapr.workflows;
+package io.diagrid.dapr.profiles;
 
 import java.util.Collections;
 import java.util.List;
@@ -13,13 +13,14 @@ import org.junit.runners.model.Statement;
 import org.testcontainers.junit.jupiter.Container;
 
 import io.diagrid.dapr.DaprContainer;
+import io.diagrid.dapr.DaprPlacementContainer;
 import io.diagrid.dapr.QuotedBoolean;
 import io.diagrid.dapr.DaprContainer.Component;
 import io.diagrid.dapr.DaprContainer.DaprLogLevel;
 
 import org.junit.runner.Description;
 
-public interface DaprLocalWithWorkflows {
+public interface DaprFullProfile {
 
     Network daprNetwork = getNetwork();
 
@@ -52,23 +53,23 @@ public interface DaprLocalWithWorkflows {
         }
     }
 
+    
+
+    @Container
+    DaprPlacementContainer daprPlacement = new DaprPlacementContainer("daprio/placement:1.12.2")
+            .withNetwork(daprNetwork)
+            .withNetworkAliases("placement"); 
+    
     @Container
     DaprContainer dapr = new DaprContainer("daprio/daprd:1.12.2")
             .withAppName("local-dapr-app")
+            //Enable Workflows
             .withComponent(new Component("kvstore", "state.in-memory", Collections.singletonMap("actorStateStore", new QuotedBoolean("true")) ))
             .withAppPort(8080)
             .withNetwork(daprNetwork)
             .withDaprLogLevel(DaprLogLevel.debug)
-            .withEnv("DAPR_HOST_IP", "127.0.0.1")
-            .withPlacementService("placement:50006")
+            .withPlacementService("placement:"+daprPlacement.getPort())
             .withAppChannelAddress("host.testcontainers.internal");
-
-    @Container
-    GenericContainer<?> daprPlacement = new GenericContainer<>("daprio/placement:1.12.2")
-            .withCommand("./placement", "-port", "50006")
-            .withExposedPorts(50006) // for wait
-            .withNetwork(daprNetwork)
-            .withNetworkAliases("placement"); 
 
     @DynamicPropertySource
     static void daprProperties(DynamicPropertyRegistry registry) {
