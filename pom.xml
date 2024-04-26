@@ -5,15 +5,15 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.1.3</version>
+		<version>3.2.3</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>io.diagrid.dapr</groupId>
-	<artifactId>dapr-spring-boot-starter</artifactId>
+	<artifactId>dapr-spring-boot</artifactId>
 	<version>0.10.7</version>
-	<name>Spring Boot :: Dapr Starter</name>
-	<description>Spring Boot :: Dapr Starter</description>
-	<packaging>jar</packaging>
+	<name>Spring Boot :: Dapr </name>
+	<description>Spring Boot :: Dapr </description>
+	<packaging>pom</packaging>
 	<url>https://github.com/diagridio/spring-boot-starter-dapr</url>
     <licenses>
         <license>
@@ -39,11 +39,11 @@
         <tag>main</tag>
     </scm>
 	<properties>
-		<java.version>8</java.version>
+		<java.version>17</java.version>
 		<snakeyaml.version>1.33</snakeyaml.version>
 		<testcontainers.version>1.19.1</testcontainers.version>
-		<daprsdk.version>1.10.0</daprsdk.version>
-                <dapr-workflows-sdk.version>0.10.0</dapr-workflows-sdk.version>
+		<daprsdk.version>1.11.0</daprsdk.version>
+        <dapr-workflows-sdk.version>0.11.0</dapr-workflows-sdk.version>
 		<testcontainers-dapr.version>0.10.12</testcontainers-dapr.version>
 		<logback-classic.version>1.4.11</logback-classic.version>
 		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
@@ -60,46 +60,12 @@
 			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
-	<dependencies>
-        <dependency>
-            <groupId>io.dapr</groupId>
-            <artifactId>dapr-sdk-springboot</artifactId>
-            <version>${daprsdk.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.dapr</groupId>
-            <artifactId>dapr-sdk-workflows</artifactId>
-            <version>${dapr-workflows-sdk.version}</version>
-        </dependency>
-		<dependency>
-            <groupId>io.diagrid.dapr</groupId>
-            <artifactId>testcontainers-dapr</artifactId>
-            <version>${testcontainers-dapr.version}</version>
-        </dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-testcontainers</artifactId>
-		</dependency>	
-		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>junit-jupiter</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-    	</dependency>
-        <dependency>
-            <groupId>com.redis.testcontainers</groupId>
-            <artifactId>testcontainers-redis-junit</artifactId>
-            <version>1.6.4</version>
-            <scope>test</scope>
-        </dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-			<scope>test</scope>
-    	</dependency>
-	</dependencies>
+    <modules>
+        <!-- <module>dapr-spring-boot-autoconfigure</module> -->
+        <module>dapr-spring-boot-testcontainers</module>
+        <module>dapr-spring-boot-starters</module>
+        
+    </modules>
 	<profiles>
         <profile>
             <id>release</id>
