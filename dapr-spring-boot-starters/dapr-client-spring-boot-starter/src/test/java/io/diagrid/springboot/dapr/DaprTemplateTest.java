@@ -1,34 +1,34 @@
 package io.diagrid.springboot.dapr;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-
-import io.diagrid.dapr.DaprContainer;
+import io.dapr.client.domain.CloudEvent;
 import io.diagrid.springboot.dapr.core.DaprTemplate;
 
-@SpringBootTest(classes=DaprConfig.class, webEnvironment = WebEnvironment.NONE)
+@SpringBootTest(classes={DaprConfig.class})
 public class DaprTemplateTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(DaprTemplateTest.class);
 
-	private static final String TOPIC = "produce-read-primitive";
+	private static final String TOPIC = "mockTopic";
 
-	
+	/* Check the subcriberController for subscription annotations */
+	@Autowired
+	private MockControllerWithSubscribe subscribeController;
 
 	@Autowired
-	private DaprContainer dapr;
-
+	private DaprTemplate<String> template;
 	
 	@Test
 	public void testDaprTemplate() {
-		System.setProperty("dapr.grpc.port", Integer.toString(dapr.getGRPCPort()));
-        System.setProperty("dapr.http.port", Integer.toString(dapr.getHTTPPort()));
-		
-		DaprTemplate<String> template = new DaprTemplate<String>();
+
 
 		for (int i = 0; i < 10; i++) {
 			var msg = "ProduceAndReadWithPrimitiveMessageType:" + i;
@@ -36,10 +36,10 @@ public class DaprTemplateTest {
 			LOG.info("++++++PRODUCE {}------", msg);
 		}
 
-		// @PulsarReader(topics = TOPIC, startMessageId = "earliest")
-		// void readPrimitiveMessagesFromPulsarTopic(String msg) {
-		// 	LOG.info("++++++READ {}------", msg);
-		// }
+		List<CloudEvent> events = subscribeController.getEvents();
+		assertEquals(10, events.size());
+	
 
+	
 	}
 }

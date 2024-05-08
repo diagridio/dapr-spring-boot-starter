@@ -16,6 +16,7 @@ import io.diagrid.dapr.DaprContainer.Component;
 import io.diagrid.dapr.DaprContainer.DaprLogLevel;
 import io.diagrid.dapr.DaprPlacementContainer;
 import io.diagrid.dapr.QuotedBoolean;
+import io.diagrid.springboot.dapr.core.DaprTemplate;
 
 
 
@@ -56,19 +57,21 @@ public class DaprConfig {
     }
 
 
+    @Bean
+    public DaprTemplate<String> getDaprTemplate(){
+        return new DaprTemplate<String>();
+    }
     
     @Bean
     public DaprContainer getDapr(DynamicPropertyRegistry registry) {
-        //TODO: This needs to be populated with the Dapr Module for Testcontainers
-
- 
-        DaprPlacementContainer daprPlacement = new DaprPlacementContainer("daprio/placement:1.12.2")
+        //TODO: This needs to be populated with the Dapr Module for Testcontainers 
+        DaprPlacementContainer daprPlacement = new DaprPlacementContainer("daprio/placement:1.13.2")
                 .withNetwork(daprNetwork)
                 .withNetworkAliases("placement"); 
         
         daprPlacement.start();
         
-        DaprContainer dapr = new DaprContainer("daprio/daprd:1.12.2")
+        DaprContainer dapr = new DaprContainer("daprio/daprd:1.13.2")
                 .withAppName("local-dapr-app")
                 //Enable Workflows
                 .withComponent(new Component("kvstore", "state.in-memory", Collections.singletonMap("actorStateStore", new QuotedBoolean("true")) ))
@@ -79,7 +82,7 @@ public class DaprConfig {
                 .withPlacementService("placement:"+daprPlacement.getPort())
                 .withAppChannelAddress("host.testcontainers.internal");
 
-        registry.add("DAPR_GRPC_ENDPOINT", () -> ("localhsot:"+dapr.getGRPCPort()));
+        registry.add("DAPR_GRPC_ENDPOINT", () -> ("localhost:"+dapr.getGRPCPort()));
         registry.add("DAPR_HTTP_ENDPOINT", dapr::getHttpEndpoint);
         
         dapr.start();
@@ -91,7 +94,6 @@ public class DaprConfig {
         System.out.println("Ports GRPC: " + Integer.toString(dapr.getGRPCPort()));
         System.out.println("Ports GRPC: " + Integer.toString(dapr.getHTTPPort()));
         
-
         return dapr;
 
     }
