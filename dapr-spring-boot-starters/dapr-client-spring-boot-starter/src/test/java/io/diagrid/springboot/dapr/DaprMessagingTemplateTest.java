@@ -10,12 +10,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import io.dapr.client.domain.CloudEvent;
-import io.diagrid.springboot.dapr.core.DaprTemplate;
+import io.diagrid.springboot.dapr.core.DaprMessagingTemplate;
 
 @SpringBootTest(classes={DaprConfig.class})
-public class DaprTemplateTest {
+public class DaprMessagingTemplateTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DaprTemplateTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DaprMessagingTemplateTest.class);
 
 	private static final String TOPIC = "mockTopic";
 
@@ -24,7 +24,7 @@ public class DaprTemplateTest {
 	private MockControllerWithSubscribe subscribeController;
 
 	@Autowired
-	private DaprTemplate<String> template;
+	private DaprMessagingTemplate<String> template;
 	
 	@Test
 	public void testDaprTemplate() {
@@ -36,6 +36,7 @@ public class DaprTemplateTest {
 			LOG.info("++++++PRODUCE {}------", msg);
 		}
 
+		@SuppressWarnings("rawtypes")
 		List<CloudEvent> events = subscribeController.getEvents();
 		assertEquals(10, events.size());
 	

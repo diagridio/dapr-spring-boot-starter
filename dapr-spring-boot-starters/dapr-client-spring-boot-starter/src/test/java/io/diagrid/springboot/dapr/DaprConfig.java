@@ -2,21 +2,29 @@ package io.diagrid.springboot.dapr;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.WeakHashMap;
 
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.keyvalue.core.KeyValueAdapter;
+import org.springframework.data.map.MapKeyValueAdapter;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Network;
 
+import io.dapr.client.DaprClient;
+import io.dapr.client.DaprClientBuilder;
 import io.diagrid.dapr.DaprContainer;
 import io.diagrid.dapr.DaprContainer.Component;
 import io.diagrid.dapr.DaprContainer.DaprLogLevel;
 import io.diagrid.dapr.DaprPlacementContainer;
 import io.diagrid.dapr.QuotedBoolean;
-import io.diagrid.springboot.dapr.core.DaprTemplate;
+import io.diagrid.springboot.dapr.core.DaprKeyValueAdapter;
+import io.diagrid.springboot.dapr.core.DaprKeyValueOperations;
+import io.diagrid.springboot.dapr.core.DaprKeyValueTemplate;
+import io.diagrid.springboot.dapr.core.DaprMessagingTemplate;
 
 
 
@@ -58,8 +66,8 @@ public class DaprConfig {
 
 
     @Bean
-    public DaprTemplate<String> getDaprTemplate(){
-        return new DaprTemplate<String>();
+    public DaprMessagingTemplate<String> getDaprTemplate(){
+        return new DaprMessagingTemplate<String>();
     }
     
     @Bean
@@ -97,5 +105,23 @@ public class DaprConfig {
         return dapr;
 
     }
+
+
+    @Bean
+    public DaprClient daprClient(){
+        return new DaprClientBuilder().build();
+    }
+
+    @Bean
+	public DaprKeyValueOperations keyValueTemplate(DaprClient daprClient) {
+		return new DaprKeyValueTemplate(keyValueAdapter(daprClient));
+	}
+
+	@Bean
+	public KeyValueAdapter keyValueAdapter(DaprClient daprClient) {
+		return new DaprKeyValueAdapter(daprClient);
+	}
+
+
 
 }

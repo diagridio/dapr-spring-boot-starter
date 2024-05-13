@@ -4,9 +4,7 @@ import org.springframework.lang.Nullable;
 
 import reactor.core.publisher.Mono;
 
-import java.util.concurrent.CompletableFuture;
-
-public interface DaprOperations<T> {
+public interface DaprMessagingOperations<T> {
     
     /**
 	 * Sends a message to the specified topic in a blocking manner.

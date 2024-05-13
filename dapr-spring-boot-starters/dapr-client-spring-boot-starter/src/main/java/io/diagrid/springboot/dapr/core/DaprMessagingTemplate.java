@@ -15,7 +15,7 @@ import org.springframework.context.ApplicationContextAware;
 import static java.util.Collections.singletonMap;
 
 
-public class DaprTemplate<T> implements DaprOperations<T>, ApplicationContextAware, BeanNameAware {
+public class DaprMessagingTemplate<T> implements DaprMessagingOperations<T>, ApplicationContextAware, BeanNameAware {
     
     private String beanName = "";
 
@@ -76,7 +76,7 @@ public class DaprTemplate<T> implements DaprOperations<T>, ApplicationContextAwa
 
     public static class SendMessageBuilderImpl<T> implements SendMessageBuilder<T> {
 
-		private final DaprTemplate<T> template;
+		private final DaprMessagingTemplate<T> template;
 
 		@Nullable
 		private final T message;
@@ -96,7 +96,7 @@ public class DaprTemplate<T> implements DaprOperations<T>, ApplicationContextAwa
 		// @Nullable
 		// private ProducerBuilderCustomizer<T> producerCustomizer;
 
-		SendMessageBuilderImpl(DaprTemplate<T> template, @Nullable T message) {
+		SendMessageBuilderImpl(DaprMessagingTemplate<T> template, @Nullable T message) {
 			this.template = template;
 			this.message = message;
 		}
