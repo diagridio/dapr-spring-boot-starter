@@ -8,36 +8,42 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+
 import io.dapr.client.domain.CloudEvent;
 import io.diagrid.springboot.dapr.core.DaprMessagingTemplate;
 
-@SpringBootTest(classes={DaprConfig.class})
+@SpringBootTest(classes={DaprConfig.class}, webEnvironment = WebEnvironment.DEFINED_PORT)
 public class DaprMessagingTemplateTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(DaprMessagingTemplateTest.class);
 
 	private static final String TOPIC = "mockTopic";
 
-	/* Check the subcriberController for subscription annotations */
 	@Autowired
-	private MockControllerWithSubscribe subscribeController;
+	private AppRestController appRestController;
 
 	@Autowired
-	private DaprMessagingTemplate<String> template;
+	@Qualifier("messagingTemplate")
+	private DaprMessagingTemplate<String> messagingTemplate;
 	
 	@Test
-	public void testDaprTemplate() {
+	public void testDaprTemplate() throws InterruptedException {
 
 
 		for (int i = 0; i < 10; i++) {
 			var msg = "ProduceAndReadWithPrimitiveMessageType:" + i;
-			template.send(TOPIC, msg);
+			messagingTemplate.send(TOPIC, msg);
 			LOG.info("++++++PRODUCE {}------", msg);
 		}
 
+		// Wait for the messages to arrive
+		Thread.sleep(1000);
+		
 		@SuppressWarnings("rawtypes")
-		List<CloudEvent> events = subscribeController.getEvents();
+		List<CloudEvent> events = appRestController.getEvents();
 		assertEquals(10, events.size());
 	
 

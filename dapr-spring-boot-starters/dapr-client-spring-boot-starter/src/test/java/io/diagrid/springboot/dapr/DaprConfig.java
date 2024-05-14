@@ -2,20 +2,21 @@ package io.diagrid.springboot.dapr;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.WeakHashMap;
-
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.keyvalue.core.KeyValueAdapter;
-import org.springframework.data.map.MapKeyValueAdapter;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.testcontainers.DockerClientFactory;
+import org.testcontainers.Testcontainers;
 import org.testcontainers.containers.Network;
 
 import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
+import io.dapr.client.DaprPreviewClient;
 import io.diagrid.dapr.DaprContainer;
 import io.diagrid.dapr.DaprContainer.Component;
 import io.diagrid.dapr.DaprContainer.DaprLogLevel;
@@ -28,9 +29,14 @@ import io.diagrid.springboot.dapr.core.DaprMessagingTemplate;
 
 
 
-@TestConfiguration(proxyBeanMethods = false)
+@TestConfiguration(proxyBeanMethods = false) 
+@ConditionalOnWebApplication
+@ComponentScan("io.dapr.springboot")  
 public class DaprConfig {
 
+
+
+    private DaprClientBuilder builder = new DaprClientBuilder();
     //TODO: This needs to be populated with the Dapr Module for Testcontainers
     Network daprNetwork = getNetwork();
 
@@ -66,12 +72,7 @@ public class DaprConfig {
 
 
     @Bean
-    public DaprMessagingTemplate<String> getDaprTemplate(){
-        return new DaprMessagingTemplate<String>();
-    }
-    
-    @Bean
-    public DaprContainer getDapr(DynamicPropertyRegistry registry) {
+    public DaprContainer getDaprContainer(DynamicPropertyRegistry registry) {
         //TODO: This needs to be populated with the Dapr Module for Testcontainers 
         DaprPlacementContainer daprPlacement = new DaprPlacementContainer("daprio/placement:1.13.2")
                 .withNetwork(daprNetwork)
@@ -79,15 +80,17 @@ public class DaprConfig {
         
         daprPlacement.start();
         
+        
+        Testcontainers.exposeHostPorts(8080);
+
         DaprContainer dapr = new DaprContainer("daprio/daprd:1.13.2")
                 .withAppName("local-dapr-app")
-                //Enable Workflows
-                .withComponent(new Component("kvstore", "state.in-memory", Collections.singletonMap("actorStateStore", new QuotedBoolean("true")) ))
+                .withComponent(new Component("kvstore", "state.in-memory", Collections.emptyMap() ))
                 .withComponent(new Component("pubsub", "pubsub.in-memory", Collections.emptyMap() ))
                 .withAppPort(8080)
                 .withNetwork(daprNetwork)
                 .withDaprLogLevel(DaprLogLevel.debug)
-                .withPlacementService("placement:"+daprPlacement.getPort())
+                .withPlacementService("placement:"+daprPlacement.getMappedPort(daprPlacement.getPort()))
                 .withAppChannelAddress("host.testcontainers.internal");
 
         registry.add("DAPR_GRPC_ENDPOINT", () -> ("localhost:"+dapr.getGRPCPort()));
@@ -108,18 +111,29 @@ public class DaprConfig {
 
 
     @Bean
+    public DaprMessagingTemplate<String> messagingTemplate(){
+        return new DaprMessagingTemplate<String>();
+    }
+    
+
+    @Bean
     public DaprClient daprClient(){
-        return new DaprClientBuilder().build();
+        return builder.build();
     }
 
     @Bean
-	public DaprKeyValueOperations keyValueTemplate(DaprClient daprClient) {
-		return new DaprKeyValueTemplate(keyValueAdapter(daprClient));
+    public DaprPreviewClient daprPreviewClient(){
+        return builder.buildPreviewClient();
+    }
+
+    @Bean
+	public DaprKeyValueOperations keyValueTemplate(DaprClient daprClient, DaprPreviewClient daprPreviewClient) {
+		return new DaprKeyValueTemplate(keyValueAdapter(daprClient, daprPreviewClient));
 	}
 
 	@Bean
-	public KeyValueAdapter keyValueAdapter(DaprClient daprClient) {
-		return new DaprKeyValueAdapter(daprClient);
+	public KeyValueAdapter keyValueAdapter(DaprClient daprClient, DaprPreviewClient daprPreviewClient) {
+		return new DaprKeyValueAdapter(daprClient, daprPreviewClient);
 	}
 
 

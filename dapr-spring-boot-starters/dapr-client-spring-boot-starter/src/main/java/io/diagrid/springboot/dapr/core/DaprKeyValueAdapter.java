@@ -1,5 +1,8 @@
 package io.diagrid.springboot.dapr.core;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.springframework.data.keyvalue.core.KeyValueAdapter;
@@ -10,15 +13,23 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.dapr.client.DaprClient;
+import io.dapr.client.DaprPreviewClient;
+import io.dapr.client.domain.QueryStateItem;
+import io.dapr.client.domain.QueryStateRequest;
+import io.dapr.client.domain.QueryStateResponse;
+import io.dapr.client.domain.query.Query;
+import io.dapr.client.domain.query.Sorting;
+import io.dapr.client.domain.query.filters.EqFilter;
 
 public class DaprKeyValueAdapter implements KeyValueAdapter{
 
     
     private DaprClient daprClient;
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private DaprPreviewClient daprPreviewClient;
 
-    public DaprKeyValueAdapter(DaprClient daprClient) {
+    public DaprKeyValueAdapter(DaprClient daprClient, DaprPreviewClient daprPreviewClient) {
         this.daprClient = daprClient;
+        this.daprPreviewClient = daprPreviewClient;
     }
 
     @Override
@@ -28,12 +39,6 @@ public class DaprKeyValueAdapter implements KeyValueAdapter{
 
     @Override
     public Object put(Object id, Object item, String keyspace) {
-        // String serializedItem = "";
-        // try {
-        //     serializedItem = objectMapper.writeValueAsString(item);
-        // } catch (JsonProcessingException e) {
-        //     e.printStackTrace();
-        // }
         daprClient.saveState("kvstore", keyspace + "-" +id.toString(), item).block();
         return item;
     }
@@ -95,8 +100,23 @@ public class DaprKeyValueAdapter implements KeyValueAdapter{
 
     @Override
     public <T> Iterable<T> find(KeyValueQuery<?> query, String keyspace, Class<T> type) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'find'");
+        
+        Query daprQuery = new Query()
+          .setFilter(new EqFilter<>("type", "vote"))
+          .setSort(Arrays.asList(new Sorting("type", Sorting.Order.DESC)));
+
+        QueryStateRequest queryStateRequest = new QueryStateRequest("kvstore")
+            .setQuery(daprQuery);
+
+        QueryStateResponse<T> queryResults = daprPreviewClient.queryState(queryStateRequest, type).block();
+        
+        List<T> itemResults = new ArrayList<T>(queryResults.getResults().size());
+        for(QueryStateItem<T> item : queryResults.getResults()){
+            itemResults.add(item.getValue());
+        }
+        
+        return itemResults;
+        
     }
 
     @Override
