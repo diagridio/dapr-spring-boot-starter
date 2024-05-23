@@ -13,6 +13,14 @@ public class MyType {
     }
 
 
+    
+
+    public MyType(String content) {
+        this.content = content;
+    }
+
+
+
 
     public MyType(Integer id, String content) {
         this.id = id;

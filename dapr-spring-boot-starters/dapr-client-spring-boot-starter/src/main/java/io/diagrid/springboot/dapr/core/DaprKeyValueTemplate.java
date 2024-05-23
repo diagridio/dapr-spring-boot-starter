@@ -164,8 +164,7 @@ public class DaprKeyValueTemplate implements DaprKeyValueOperations, Application
 
     @Override
     public KeyValueAdapter getKeyValueAdapter() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getKeyValueAdapter'");
+        return adapter;
     }
 
     @Override
@@ -187,8 +186,8 @@ public class DaprKeyValueTemplate implements DaprKeyValueOperations, Application
 
     @Override
     public <T> Iterable<T> find(KeyValueQuery<?> query, Class<T> type) {
-        // TODO Auto-generated method stub
-        return null;
+        String keyspace = resolveKeySpace(type);
+        return adapter.find(query, keyspace, type);
     }
 
     @Override

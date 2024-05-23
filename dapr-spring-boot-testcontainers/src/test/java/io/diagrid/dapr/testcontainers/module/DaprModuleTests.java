@@ -69,9 +69,6 @@ public class DaprModuleTests {
         assertEquals("Second Activity", workflowOutput.getPayloads().get(1));
         assertEquals(instanceId, workflowOutput.getWorkflowId());
         
-        
-       
-
     }
 
 }

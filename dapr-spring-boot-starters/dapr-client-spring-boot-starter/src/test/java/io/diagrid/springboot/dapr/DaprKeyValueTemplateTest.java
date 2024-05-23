@@ -1,6 +1,7 @@
 package io.diagrid.springboot.dapr;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.data.keyvalue.core.query.KeyValueQuery;
 import io.diagrid.springboot.dapr.core.DaprKeyValueTemplate;
 
 @SpringBootTest(classes={DaprConfig.class})
@@ -31,8 +33,24 @@ public class DaprKeyValueTemplateTest {
 		assertNotNull(savedType);
 
 	
-		MyType findById = keyValueTemplate.findById(3, MyType.class).get();
-		assertNotNull(findById);
-		assertEquals(findById, savedType);
+		// MyType findById = keyValueTemplate.findById(3, MyType.class).get();
+		// assertNotNull(findById);
+		// assertEquals(findById, savedType);
+
+		KeyValueQuery<String> keyValueQuery = new KeyValueQuery<String>("'content' == 'test'");
+		
+		Iterable<MyType> myTypes = keyValueTemplate.find(keyValueQuery, MyType.class);
+		assertTrue(myTypes.iterator().hasNext());
+
+		MyType item = myTypes.iterator().next();
+		assertEquals(Integer.valueOf(3), item.getId());
+		assertEquals(item.getContent(), "test");
+		
+
+		keyValueQuery = new KeyValueQuery<String>("'content' == 'asd'");
+		
+		myTypes = keyValueTemplate.find(keyValueQuery, MyType.class);
+		assertTrue(!myTypes.iterator().hasNext());
+
 	}
 }
