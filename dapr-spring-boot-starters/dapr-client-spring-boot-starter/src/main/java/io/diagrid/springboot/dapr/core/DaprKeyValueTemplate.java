@@ -111,14 +111,36 @@ public class DaprKeyValueTemplate implements DaprKeyValueOperations, Application
 
     @Override
     public <T> T update(T objectToUpdate) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'update'");
+        KeyValuePersistentEntity<?, ?> entity = getKeyValuePersistentEntity(objectToUpdate);
+
+		GeneratingIdAccessor generatingIdAccessor = new GeneratingIdAccessor(entity.getPropertyAccessor(objectToUpdate),
+				entity.getIdProperty(), identifierGenerator);
+		Object id = generatingIdAccessor.getOrGenerateIdentifier();
+
+		return update(id, objectToUpdate);
+       
     }
 
     @Override
     public <T> T update(Object id, T objectToUpdate) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'update'");
+        Assert.notNull(id, "Id for object to be inserted must not be null");
+		Assert.notNull(objectToUpdate, "Object to be inserted must not be null");
+
+		String keyspace = resolveKeySpace(objectToUpdate.getClass());
+
+		//potentiallyPublishEvent(KeyValueEvent.beforeInsert(id, keyspace, objectToInsert.getClass(), objectToInsert));
+
+		execute((KeyValueCallback<Void>) adapter -> {
+
+			
+
+			adapter.put(id, objectToUpdate, keyspace);
+			return null;
+		});
+
+		//potentiallyPublishEvent(KeyValueEvent.afterInsert(id, keyspace, objectToInsert.getClass(), objectToInsert));
+
+		return objectToUpdate;
     }
 
     @Override

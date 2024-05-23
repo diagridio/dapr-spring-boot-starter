@@ -26,7 +26,7 @@ public class DaprKeyValueTemplateTest {
 
 
 	@Test
-	public void testDaprKeyValueTemplate() {
+	public void testInsertAndQueryDaprKeyValueTemplate() {
 
 
 		MyType savedType = keyValueTemplate.insert(new MyType(3, "test"));
@@ -52,5 +52,16 @@ public class DaprKeyValueTemplateTest {
 		myTypes = keyValueTemplate.find(keyValueQuery, MyType.class);
 		assertTrue(!myTypes.iterator().hasNext());
 
+	}
+
+	@Test
+	public void testUpdateDaprKeyValueTemplate() {
+
+		MyType insertedType = keyValueTemplate.insert(new MyType(2, "test"));
+		assertNotNull(insertedType);
+
+		MyType updatedType = keyValueTemplate.update(new MyType(2, "test2"));
+		assertNotNull(updatedType);
+		
 	}
 }
