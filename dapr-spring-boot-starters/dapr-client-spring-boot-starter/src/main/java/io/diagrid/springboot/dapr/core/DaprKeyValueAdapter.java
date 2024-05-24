@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.keyvalue.core.KeyValueAdapter;
 import org.springframework.data.keyvalue.core.query.KeyValueQuery;
 import org.springframework.data.util.CloseableIterator;
@@ -75,15 +74,13 @@ public class DaprKeyValueAdapter implements KeyValueAdapter{
 
     @Override
     public <T> T get(Object id, String keyspace, Class<T> type) {
-        Map<String, String> metadata = new HashMap<>();
-        metadata.put("contentType","application/json");
-        GetStateRequest stateRequest = new GetStateRequest("kvstore", keyspace + "-" + id.toString()).setMetadata(metadata);
-        return daprClient.getState(stateRequest, new TypeRef<T>(){}).block().getValue();
+        Map<String, String> meta = Map.of("contentType", "application/json");
+        GetStateRequest stateRequest = new GetStateRequest("kvstore", keyspace + "-" + id.toString()).setMetadata(meta);
+        return daprClient.getState(stateRequest, TypeRef.get(type)).block().getValue();
     }
 
     @Override
     public Object delete(Object id, String keyspace) {
-        // TODO Auto-generated method stub
         daprClient.deleteState("kvstore", keyspace + "-" + id.toString()).block();
         return null;
     }

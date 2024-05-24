@@ -12,10 +12,15 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.data.keyvalue.core.query.KeyValueQuery;
+import org.springframework.test.context.TestPropertySource;
+
 import io.diagrid.springboot.dapr.core.DaprKeyValueTemplate;
 
-@SpringBootTest(classes={DaprConfig.class})
+@SpringBootTest(classes={DaprTestConfig.class})
 @DependsOn("keyValueTemplate")
+@TestPropertySource(properties = {
+    "dapr.query.indexName=MyQueryIndex",
+})
 public class DaprKeyValueTemplateTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(DaprKeyValueTemplateTest.class);
@@ -33,9 +38,9 @@ public class DaprKeyValueTemplateTest {
 		assertNotNull(savedType);
 
 	
-		// MyType findById = keyValueTemplate.findById(3, MyType.class).get();
-		// assertNotNull(findById);
-		// assertEquals(findById, savedType);
+		MyType findById = keyValueTemplate.findById(3, MyType.class).get();
+		assertNotNull(findById);
+		assertEquals(findById, savedType);
 
 		KeyValueQuery<String> keyValueQuery = new KeyValueQuery<String>("'content' == 'test'");
 		
@@ -62,6 +67,6 @@ public class DaprKeyValueTemplateTest {
 
 		MyType updatedType = keyValueTemplate.update(new MyType(2, "test2"));
 		assertNotNull(updatedType);
-		
+
 	}
 }

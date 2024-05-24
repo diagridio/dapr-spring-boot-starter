@@ -15,7 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import io.dapr.client.domain.CloudEvent;
 import io.diagrid.springboot.dapr.core.DaprMessagingTemplate;
 
-@SpringBootTest(classes={DaprConfig.class}, webEnvironment = WebEnvironment.DEFINED_PORT)
+@SpringBootTest(classes={DaprTestConfig.class}, webEnvironment = WebEnvironment.DEFINED_PORT)
 public class DaprMessagingTemplateTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(DaprMessagingTemplateTest.class);
@@ -30,7 +30,7 @@ public class DaprMessagingTemplateTest {
 	private DaprMessagingTemplate<String> messagingTemplate;
 	
 	@Test
-	public void testDaprTemplate() throws InterruptedException {
+	public void testDaprMessagingTemplate() throws InterruptedException {
 
 
 		for (int i = 0; i < 10; i++) {

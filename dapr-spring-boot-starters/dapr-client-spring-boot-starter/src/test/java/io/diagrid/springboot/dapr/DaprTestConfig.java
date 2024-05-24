@@ -8,7 +8,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.data.keyvalue.core.KeyValueAdapter;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.testcontainers.Testcontainers;
 import org.testcontainers.containers.Network;
@@ -18,14 +17,10 @@ import com.redis.testcontainers.RedisContainer;
 
 import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
-import io.dapr.client.DaprPreviewClient;
 import io.diagrid.dapr.DaprContainer;
 import io.diagrid.dapr.DaprContainer.Component;
 import io.diagrid.dapr.DaprContainer.DaprLogLevel;
 import io.diagrid.dapr.QuotedBoolean;
-import io.diagrid.springboot.dapr.core.DaprKeyValueAdapter;
-import io.diagrid.springboot.dapr.core.DaprKeyValueOperations;
-import io.diagrid.springboot.dapr.core.DaprKeyValueTemplate;
 import io.diagrid.springboot.dapr.core.DaprMessagingTemplate;
 
 
@@ -33,13 +28,10 @@ import io.diagrid.springboot.dapr.core.DaprMessagingTemplate;
 @TestConfiguration(proxyBeanMethods = false) 
 @ConditionalOnWebApplication
 @ComponentScan("io.dapr.springboot")  
-public class DaprConfig {
-
-    private DaprClientBuilder builder = new DaprClientBuilder();
+public class DaprTestConfig {
 
     @Bean
     public DaprContainer getDaprContainer(DynamicPropertyRegistry registry) {
-
 
         Testcontainers.exposeHostPorts(8080);
 
@@ -84,30 +76,9 @@ public class DaprConfig {
 
     }
 
-
     @Bean
-    public DaprMessagingTemplate<String> messagingTemplate(){
-        return new DaprMessagingTemplate<String>();
-    }
-
-    @Bean
-    public DaprClient daprClient(){
-        return builder.build();
-    }
-
-    @Bean
-    public DaprPreviewClient daprPreviewClient(){
-        return builder.buildPreviewClient();
-    }
-
-    @Bean
-	public DaprKeyValueOperations keyValueTemplate(DaprClient daprClient, DaprPreviewClient daprPreviewClient) {
-		return new DaprKeyValueTemplate(keyValueAdapter(daprClient, daprPreviewClient));
-	}
-
-	@Bean
-	public KeyValueAdapter keyValueAdapter(DaprClient daprClient, DaprPreviewClient daprPreviewClient) {
-		return new DaprKeyValueAdapter(daprClient, daprPreviewClient, "MyQueryIndex");
-	}
+    public DaprMessagingTemplate<String> messagingTemplate(DaprClient daprClient){
+        return new DaprMessagingTemplate<String>(daprClient);
+    } 
 
 }

@@ -22,7 +22,12 @@ public class DaprMessagingTemplate<T> implements DaprMessagingOperations<T>, App
     @Nullable
 	private ApplicationContext applicationContext;
 
-	private DaprClient client = new DaprClientBuilder().build();
+	private final DaprClient daprClient;
+
+	
+	public DaprMessagingTemplate(DaprClient daprClient) {
+		this.daprClient = daprClient;
+	}
 
 	private String MESSAGE_TTL_IN_SECONDS = "10";
 
@@ -67,7 +72,7 @@ public class DaprMessagingTemplate<T> implements DaprMessagingOperations<T>, App
 	//		@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
 	//		@Nullable ProducerBuilderCustomizer<T> producerCustomizer) {
 		
-			return client.publishEvent("pubsub",
+			return daprClient.publishEvent("pubsub",
 				topic,
 				message,
 				singletonMap(Metadata.TTL_IN_SECONDS, MESSAGE_TTL_IN_SECONDS));
