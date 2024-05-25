@@ -33,14 +33,16 @@ public class DaprKeyValueAdapter implements KeyValueAdapter{
 
 
     private String queryIndexName;
+    private String statestoreName;
     
     private DaprClient daprClient;
     private DaprPreviewClient daprPreviewClient;
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
-    public DaprKeyValueAdapter(DaprClient daprClient, DaprPreviewClient daprPreviewClient, String queryIndexName) {
+    public DaprKeyValueAdapter(DaprClient daprClient, DaprPreviewClient daprPreviewClient, String statestoreName, String queryIndexName) {
         this.daprClient = daprClient;
         this.daprPreviewClient = daprPreviewClient;
+        this.statestoreName = statestoreName;
         this.queryIndexName = queryIndexName;
     }
 
@@ -52,12 +54,12 @@ public class DaprKeyValueAdapter implements KeyValueAdapter{
     @Override
     public Object put(Object id, Object item, String keyspace) {
         Map<String, String> meta = Map.of("contentType", "application/json");
-        SaveStateRequest request = new SaveStateRequest("kvstore")
+        SaveStateRequest request = new SaveStateRequest(statestoreName)
 			 		.setStates(new State<>(keyspace + "-" +id.toString(), item, null, meta, null));
 
         daprClient.saveBulkState(request).block();
 
-        //daprClient.saveState("kvstore", keyspace + "-" +id.toString(), item).block();
+        
         return item;
     }
 
@@ -69,19 +71,19 @@ public class DaprKeyValueAdapter implements KeyValueAdapter{
 
     @Override
     public Object get(Object id, String keyspace) {
-        return daprClient.getState("kvstore", keyspace + "-" + id.toString(), Object.class).block().getValue();
+        return daprClient.getState(statestoreName, keyspace + "-" + id.toString(), Object.class).block().getValue();
     }
 
     @Override
     public <T> T get(Object id, String keyspace, Class<T> type) {
         Map<String, String> meta = Map.of("contentType", "application/json");
-        GetStateRequest stateRequest = new GetStateRequest("kvstore", keyspace + "-" + id.toString()).setMetadata(meta);
+        GetStateRequest stateRequest = new GetStateRequest(statestoreName, keyspace + "-" + id.toString()).setMetadata(meta);
         return daprClient.getState(stateRequest, TypeRef.get(type)).block().getValue();
     }
 
     @Override
     public Object delete(Object id, String keyspace) {
-        daprClient.deleteState("kvstore", keyspace + "-" + id.toString()).block();
+        daprClient.deleteState(statestoreName, keyspace + "-" + id.toString()).block();
         return null;
     }
 
@@ -122,6 +124,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter{
         metadata.put("contentType","application/json");
         metadata.put("queryIndexName", queryIndexName);
 
+        System.out.println("Querying statestore: " + statestoreName + ", with query index: " + queryIndexName + " for type: " + type.getCanonicalName());
         SpelExpression expression = PARSER.parseRaw(query.getCriteria().toString());
         SpelNode left = expression.getAST().getChild(0);
         SpelNode right = expression.getAST().getChild(1);
@@ -135,7 +138,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter{
         
         Query daprQuery = new Query().setFilter(filter);
 
-        QueryStateRequest queryStateRequest = new QueryStateRequest("kvstore")
+        QueryStateRequest queryStateRequest = new QueryStateRequest(statestoreName)
             .setQuery(daprQuery).setMetadata(metadata);
 
         QueryStateResponse<T> queryResults = null;
@@ -147,7 +150,8 @@ public class DaprKeyValueAdapter implements KeyValueAdapter{
                 itemResults.add(item.getValue());
             }
         }catch(DaprException de){
-            //TODO: dea;l with invalid output (related to json)
+            //TODO: deal with invalid output (related to json)
+            de.printStackTrace();
         }
         
         return itemResults;

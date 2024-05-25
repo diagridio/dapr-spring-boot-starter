@@ -76,9 +76,6 @@ public class DaprTestConfig {
 
     }
 
-    @Bean
-    public DaprMessagingTemplate<String> messagingTemplate(DaprClient daprClient){
-        return new DaprMessagingTemplate<String>(daprClient);
-    } 
+    
 
 }

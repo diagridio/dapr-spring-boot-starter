@@ -9,12 +9,19 @@ import io.dapr.client.DaprClientBuilder;
 import io.dapr.client.DaprPreviewClient;
 import io.diagrid.springboot.dapr.core.DaprKeyValueAdapter;
 import io.diagrid.springboot.dapr.core.DaprKeyValueTemplate;
+import io.diagrid.springboot.dapr.core.DaprMessagingTemplate;
 
 @Component
 public class DaprConfig {
 
     @Value("${dapr.query.indexName:QueryIndex}")
     private String queryIndexName;
+
+    @Value("${dapr.statestore.name:kvstore}")
+    private String statestoreName;
+
+    @Value("${dapr.pubsub.name:pubsub}")
+    private String pubsubName;
 
     private DaprClientBuilder builder = new DaprClientBuilder();
 
@@ -35,9 +42,13 @@ public class DaprConfig {
 
 	@Bean
 	public DaprKeyValueAdapter keyValueAdapter(DaprClient daprClient, DaprPreviewClient daprPreviewClient) {
-		return new DaprKeyValueAdapter(daprClient, daprPreviewClient, queryIndexName);
+		return new DaprKeyValueAdapter(daprClient, daprPreviewClient, statestoreName, queryIndexName);
 	}
 
+    @Bean
+    public DaprMessagingTemplate<String> messagingTemplate(DaprClient daprClient){
+        return new DaprMessagingTemplate<String>(daprClient, pubsubName);
+    } 
 
     
 }
