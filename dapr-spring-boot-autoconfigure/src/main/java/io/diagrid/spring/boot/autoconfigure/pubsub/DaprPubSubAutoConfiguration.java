@@ -5,7 +5,6 @@ import io.dapr.client.DaprClientBuilder;
 import io.diagrid.spring.boot.autoconfigure.client.DaprClientAutoConfiguration;
 import io.diagrid.spring.core.messaging.DaprMessagingTemplate;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnCheckpointRestore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -18,7 +17,7 @@ public class DaprPubSubAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public DaprMessagingTemplate<String> messagingTemplate(DaprClientBuilder daprClientBuilder, DaprPubSubProperties daprPubSubProperties) {
+    public DaprMessagingTemplate<?> messagingTemplate(DaprClientBuilder daprClientBuilder, DaprPubSubProperties daprPubSubProperties) {
         return new DaprMessagingTemplate<>(daprClientBuilder.build(), daprPubSubProperties.getName());
     }
 
