@@ -2,19 +2,31 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.3</version>
-		<relativePath/> <!-- lookup parent from repository -->
-	</parent>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.0</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
 	<groupId>io.diagrid.dapr</groupId>
 	<artifactId>dapr-spring-boot</artifactId>
-	<version>0.10.7</version>
-	<name>Spring Boot :: Dapr </name>
-	<description>Spring Boot :: Dapr </description>
+	<version>0.11.0-SNAPSHOT</version>
+
+	<name>Dapr Spring Boot</name>
+	<description>Dapr Spring Boot</description>
+
 	<packaging>pom</packaging>
 	<url>https://github.com/diagridio/spring-boot-starter-dapr</url>
+
+    <modules>
+        <module>dapr-spring-boot-autoconfigure</module>
+        <module>dapr-spring-boot-testcontainers</module>
+        <module>dapr-spring-boot-starters/dapr-client-spring-boot-starter</module>
+        <module>dapr-spring-core</module>
+    </modules>
+
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -38,18 +50,20 @@
         <url>https://github.com/diagridio/spring-boot-starter-dapr</url>
         <tag>main</tag>
     </scm>
+
 	<properties>
-		<java.version>17</java.version>
-		<snakeyaml.version>1.33</snakeyaml.version>
-		<testcontainers.version>1.19.1</testcontainers.version>
+        <java.version>17</java.version>
+
 		<daprsdk.version>1.11.0</daprsdk.version>
         <dapr-workflows-sdk.version>0.11.0</dapr-workflows-sdk.version>
 		<testcontainers-dapr.version>0.10.14</testcontainers-dapr.version>
-		<logback-classic.version>1.4.11</logback-classic.version>
+        <testcontainers-redis.version>1.6.4</testcontainers-redis.version>
+
 		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
 		<maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
 		<jreleaser.version>1.8.0</jreleaser.version>
 	</properties>
+
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
@@ -60,12 +74,7 @@
 			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
-    <modules>
-        <!-- <module>dapr-spring-boot-autoconfigure</module> -->
-        <module>dapr-spring-boot-testcontainers</module>
-        <module>dapr-spring-boot-starters</module>
-        
-    </modules>
+
 	<profiles>
         <profile>
             <id>release</id>
@@ -134,4 +143,5 @@
             </build>
         </profile>
     </profiles>
+
 </project>

@@ -3,11 +3,13 @@ package io.diagrid.dapr.testcontainers.module;
 import io.dapr.workflows.runtime.WorkflowActivity;
 import io.dapr.workflows.runtime.WorkflowActivityContext;
 
-public class SecondActivity implements WorkflowActivity{
+public class SecondActivity implements WorkflowActivity {
+
     @Override
     public Object run(WorkflowActivityContext ctx) {
         TestWorkflowPayload workflowPayload = ctx.getInput(TestWorkflowPayload.class);
         workflowPayload.getPayloads().add("Second Activity");
         return workflowPayload;
     }
+
 }

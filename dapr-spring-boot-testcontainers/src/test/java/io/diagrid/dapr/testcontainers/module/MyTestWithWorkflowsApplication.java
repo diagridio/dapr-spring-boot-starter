@@ -1,13 +1,13 @@
 package io.diagrid.dapr.testcontainers.module;
 
+import io.diagrid.dapr.testcontainers.DaprModule;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.testcontainers.context.ImportTestcontainers;
 
-import io.diagrid.dapr.testcontainers.*;
-
-@SpringBootApplication()
+@SpringBootApplication
 public class MyTestWithWorkflowsApplication {
+
     public static void main(String[] args) {
         SpringApplication.run(MyTestWithWorkflowsApplication.class, args);
     }
@@ -16,4 +16,5 @@ public class MyTestWithWorkflowsApplication {
     static class DaprTestConfiguration {
        
     }
+
 }
