@@ -6,16 +6,13 @@ public class TestWorkflowPayload {
     private List<String> payloads;
     private String workflowId;
 
-    
     public TestWorkflowPayload() {
     }
 
-    
     public TestWorkflowPayload(List<String> payloads, String workflowId) {
         this.payloads = payloads;
         this.workflowId = workflowId;
     }
-
 
     public TestWorkflowPayload(List<String> payloads) {
         this.payloads = payloads;
@@ -35,8 +32,5 @@ public class TestWorkflowPayload {
 
     public void setWorkflowId(String workflowId) {
         this.workflowId = workflowId;
-    } 
-
-    
-    
+    }
 }

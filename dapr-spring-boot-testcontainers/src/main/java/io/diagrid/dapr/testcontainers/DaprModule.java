@@ -11,7 +11,6 @@ import io.diagrid.dapr.QuotedBoolean;
 import io.diagrid.dapr.DaprContainer.Component;
 import io.diagrid.dapr.DaprContainer.DaprLogLevel;
 
-
 public interface DaprModule {
  
     @Container

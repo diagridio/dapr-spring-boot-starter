@@ -1,19 +1,34 @@
-# Testcontainers Modules for Dapr
+# Dapr Spring Boot
 
-Repository hosting the Testcontainers Dapr modules in Java, Go and .NET. 
+This project brings Dapr support in Spring Boot to build cloud native Java applications.
 
-## Java
+## 🚀&nbsp; Quick Start
 
-If you are using Spring Boot, to get started with Dapr you just need to add the following dependency to your Maven or Graddle project: 
+### Pre-Requisites
+
+* Java 17
+
+### Dapr Client Spring Boot Starter
+
+Maven
 
 ```xml
     <dependency>
         <groupId>io.diagrid.dapr</groupId>
         <artifactId>dapr-spring-boot-starter</artifactId>
-        <version>0.10.0</version>
+        <version>0.11.0</version>
     </dependency>    
 ```
 
-## Sample Project
+Gradle
 
-TBD
+```groovy
+dependencies {
+    implementation "io.diagrid.dapr:dapr-spring-boot-starter:0.11.0"
+}
+```
+
+## 🖊️&nbsp; License
+
+This project is licensed under the **Apache License 2.0**. See [LICENSE](LICENSE) for more information.
+

@@ -1,30 +1,28 @@
 package io.diagrid.dapr.testcontainers.module;
 
-import java.util.ArrayList;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dapr.workflows.client.DaprWorkflowClient;
+import io.dapr.workflows.client.WorkflowInstanceStatus;
+import io.dapr.workflows.runtime.WorkflowRuntime;
+import io.dapr.workflows.runtime.WorkflowRuntimeBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import io.dapr.workflows.client.DaprWorkflowClient;
-import io.dapr.workflows.client.WorkflowInstanceStatus;
-import io.dapr.workflows.runtime.WorkflowRuntime;
-import io.dapr.workflows.runtime.WorkflowRuntimeBuilder;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.time.Duration;
+import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
-import java.time.Duration;
-
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest(classes = MyTestWithWorkflowsApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @Testcontainers
 public class DaprModuleTests {
 
-    @Autowired()
+    @Autowired
     private SubscriptionsRestController subscriptionsRestController;
 
     private DaprWorkflowClient workflowClient;
@@ -68,7 +66,6 @@ public class DaprModuleTests {
         assertEquals("First Activity", workflowOutput.getPayloads().get(0));
         assertEquals("Second Activity", workflowOutput.getPayloads().get(1));
         assertEquals(instanceId, workflowOutput.getWorkflowId());
-        
     }
 
 }
