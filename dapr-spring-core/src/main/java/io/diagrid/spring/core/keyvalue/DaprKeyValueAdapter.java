@@ -3,6 +3,7 @@ package io.diagrid.spring.core.keyvalue;
 import io.dapr.client.DaprClient;
 import io.dapr.client.DaprPreviewClient;
 import io.dapr.client.domain.*;
+import io.dapr.client.domain.query.Pagination;
 import io.dapr.client.domain.query.Query;
 import io.dapr.client.domain.query.filters.EqFilter;
 import io.dapr.client.domain.query.filters.Filter;
@@ -27,7 +28,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     private String queryIndexName;
     private String statestoreName;
-    
+    private int queryMaxResults = 1000;
     private DaprClient daprClient;
     private DaprPreviewClient daprPreviewClient;
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
@@ -116,6 +117,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         metadata.put("contentType","application/json");
         metadata.put("queryIndexName", queryIndexName);
 
+        
         System.out.println("Querying statestore: " + statestoreName + ", with query index: " + queryIndexName + " for type: " + type.getCanonicalName());
         SpelExpression expression = PARSER.parseRaw(query.getCriteria().toString());
         SpelNode left = expression.getAST().getChild(0);
@@ -129,7 +131,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         }
         
         Query daprQuery = new Query().setFilter(filter);
-
+        daprQuery.setPagination(new Pagination(query.getRows(), String.valueOf(query.getOffset())));
         QueryStateRequest queryStateRequest = new QueryStateRequest(statestoreName)
             .setQuery(daprQuery).setMetadata(metadata);
 

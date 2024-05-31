@@ -8,6 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.keyvalue.core.query.KeyValueQuery;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Integration tests for {@link DaprKeyValueTemplateIT}.
@@ -41,6 +45,40 @@ public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
 
         myTypes = keyValueTemplate.find(keyValueQuery, TestType.class);
         assertThat(!myTypes.iterator().hasNext()).isTrue();
+    }
+
+    @Test
+    public void testInsertMoreThan10AndQueryDaprKeyValueTemplate() {
+
+        List<TestType> types = new ArrayList<>();
+
+        types.add(keyValueTemplate.insert(new TestType(0, "test")));
+        types.add(keyValueTemplate.insert(new TestType(1, "test")));
+        types.add(keyValueTemplate.insert(new TestType(2, "test")));
+        types.add(keyValueTemplate.insert(new TestType(3, "test")));
+        types.add(keyValueTemplate.insert(new TestType(4, "test")));
+        types.add(keyValueTemplate.insert(new TestType(5, "test")));
+        types.add(keyValueTemplate.insert(new TestType(6, "test")));
+        types.add(keyValueTemplate.insert(new TestType(7, "test")));
+        types.add(keyValueTemplate.insert(new TestType(8, "test")));
+        types.add(keyValueTemplate.insert(new TestType(9, "test")));
+        types.add(keyValueTemplate.insert(new TestType(10, "test")));
+        types.add(keyValueTemplate.insert(new TestType(11, "test")));
+
+        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<String>("'content' == 'test'");
+        keyValueQuery.setRows(100);
+        keyValueQuery.setOffset(0);
+        Iterable<TestType> myTypes = keyValueTemplate.find(keyValueQuery, TestType.class);
+        assertThat(myTypes.iterator().hasNext()).isTrue();
+
+        var index = 0;
+        for(TestType tt : myTypes){
+            System.out.println("Index " + index);
+            assertEquals(types.get(index), tt);
+            index++;
+        }
+        assertEquals(index, types.size());
+
     }
 
     @Test

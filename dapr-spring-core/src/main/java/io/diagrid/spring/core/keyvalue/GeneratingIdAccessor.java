@@ -10,8 +10,6 @@ import org.springframework.util.Assert;
  * {@link IdentifierAccessor} adding a {@link #getOrGenerateIdentifier()} to automatically generate an identifier and
  * set it on the underling bean instance.
  *
- * @author Oliver Gierke
- * @author Mark Paluch
  * @see #getOrGenerateIdentifier()
  */
 class GeneratingIdAccessor implements IdentifierAccessor {

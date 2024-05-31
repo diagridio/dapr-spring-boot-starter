@@ -50,20 +50,13 @@ public class DaprMessagingTemplate<T> implements DaprMessagingOperations<T>, App
 	}
 
 	private Void doSend(@Nullable String topic, @Nullable T message){
-			//, @Nullable Schema<T> schema,
-			//@Nullable Collection<String> encryptionKeys,
-			//@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
-			//@Nullable ProducerBuilderCustomizer<T> producerCustomizer) {
+		
 		
 			return doSendAsync(topic, message).block();
-					//, schema, encryptionKeys, typedMessageBuilderCustomizer,
-					//producerCustomizer)
+		
 	}
 
 	private Mono<Void> doSendAsync(@Nullable String topic, @Nullable T message){
-	//		@Nullable Schema<T> schema, @Nullable Collection<String> encryptionKeys,
-	//		@Nullable TypedMessageBuilderCustomizer<T> typedMessageBuilderCustomizer,
-	//		@Nullable ProducerBuilderCustomizer<T> producerCustomizer) {
 			System.out.println("Publishing Event From Dapr Messaging Template to Pubsub: " + pubsubName + " and topic: " + topic + " Message: " + message);
 			return daprClient.publishEvent(pubsubName,
 				topic,
@@ -81,18 +74,6 @@ public class DaprMessagingTemplate<T> implements DaprMessagingOperations<T>, App
 		@Nullable
 		private String topic;
 
-		// @Nullable
-		// private Schema<T> schema;
-
-		// @Nullable
-		// private Collection<String> encryptionKeys;
-
-		// @Nullable
-		// private TypedMessageBuilderCustomizer<T> messageCustomizer;
-
-		// @Nullable
-		// private ProducerBuilderCustomizer<T> producerCustomizer;
-
 		SendMessageBuilderImpl(DaprMessagingTemplate<T> template, @Nullable T message) {
 			this.template = template;
 			this.message = message;
@@ -104,42 +85,15 @@ public class DaprMessagingTemplate<T> implements DaprMessagingOperations<T>, App
 			return this;
 		}
 
-		// @Override
-		// public SendMessageBuilder<T> withSchema(Schema<T> schema) {
-		// 	this.schema = schema;
-		// 	return this;
-		// }
 
-		// @Override
-		// public SendMessageBuilder<T> withEncryptionKeys(Collection<String> encryptionKeys) {
-		// 	this.encryptionKeys = encryptionKeys;
-		// 	return this;
-		// }
-
-		// @Override
-		// public SendMessageBuilder<T> withMessageCustomizer(TypedMessageBuilderCustomizer<T> messageCustomizer) {
-		// 	this.messageCustomizer = messageCustomizer;
-		// 	return this;
-		// }
-
-		// @Override
-		// public SendMessageBuilder<T> withProducerCustomizer(ProducerBuilderCustomizer<T> producerCustomizer) {
-		// 	this.producerCustomizer = producerCustomizer;
-		// 	return this;
-		// }
 
 		@Override
 		public Void send() {
 			return this.template.doSend(this.topic, this.message);
-			// return this.template.doSend(this.topic, this.message, this.schema, this.encryptionKeys,
-			// 		this.messageCustomizer, this.producerCustomizer);
 		}
 
 		@Override
 		public Mono<Void> sendAsync() {
-			// return this.template.doSendAsync(this.topic, this.message, this.schema, this.encryptionKeys,
-			// 		this.messageCustomizer, this.producerCustomizer);
-
 			return this.template.doSendAsync(this.topic, this.message);
 		}
 

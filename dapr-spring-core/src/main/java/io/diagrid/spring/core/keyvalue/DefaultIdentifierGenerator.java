@@ -16,8 +16,6 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Default implementation of {@link IdentifierGenerator} to generate identifiers of types {@link UUID}, String,
  *
- * @author Christoph Strobl
- * @author Oliver Gierke
  */
 enum DefaultIdentifierGenerator implements IdentifierGenerator {
 
