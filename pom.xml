@@ -54,10 +54,10 @@
 	<properties>
         <java.version>17</java.version>
 
-		<daprsdk.version>1.11.0</daprsdk.version>
+		<daprsdk.version>1.12.0-SNAPSHOT</daprsdk.version>
         <dapr-workflows-sdk.version>0.11.0</dapr-workflows-sdk.version>
 		<testcontainers-dapr.version>0.10.14</testcontainers-dapr.version>
-        <testcontainers-redis.version>1.6.4</testcontainers-redis.version>
+        <testcontainers-test.version>1.19.8</testcontainers-test.version>
 
 		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
 		<maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>

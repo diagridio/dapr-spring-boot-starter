@@ -39,12 +39,18 @@
 			<artifactId>testcontainers-dapr</artifactId>
 			<version>${testcontainers-dapr.version}</version>
 		</dependency>
-        <dependency>
-            <groupId>com.redis.testcontainers</groupId>
-            <artifactId>testcontainers-redis-junit</artifactId>
-            <version>${testcontainers-redis.version}</version>
-            <scope>test</scope>
-        </dependency>		
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>${testcontainers-test.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>${testcontainers-test.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 </project>

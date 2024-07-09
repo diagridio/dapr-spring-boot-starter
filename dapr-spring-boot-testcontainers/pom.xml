@@ -56,12 +56,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.redis.testcontainers</groupId>
-			<artifactId>testcontainers-redis-junit</artifactId>
-			<version>${testcontainers-redis.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>io.dapr</groupId>
 			<artifactId>dapr-sdk-springboot3</artifactId>
 			<version>${daprsdk.version}</version>

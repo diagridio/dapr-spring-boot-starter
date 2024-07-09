@@ -12,25 +12,12 @@ public class DaprStateStoreProperties {
      */
     private String name;
 
-    /**
-     * Index to use when querying the state store.
-     */
-    private String queryIndex;
-
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getQueryIndex() {
-        return queryIndex;
-    }
-
-    public void setQueryIndex(String queryIndex) {
-        this.queryIndex = queryIndex;
     }
 
 }

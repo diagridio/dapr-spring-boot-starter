@@ -1,10 +1,10 @@
 package io.diagrid.dapr.testcontainers.module;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dapr.workflows.client.DaprWorkflowClient;
-import io.dapr.workflows.client.WorkflowInstanceStatus;
-import io.dapr.workflows.runtime.WorkflowRuntime;
-import io.dapr.workflows.runtime.WorkflowRuntimeBuilder;
+import java.time.Duration;
+import java.util.ArrayList;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,11 +12,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.Duration;
-import java.util.ArrayList;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import io.dapr.workflows.client.DaprWorkflowClient;
+import io.dapr.workflows.client.WorkflowInstanceStatus;
+import io.dapr.workflows.runtime.WorkflowRuntime;
+import io.dapr.workflows.runtime.WorkflowRuntimeBuilder;
 
 @SpringBootTest(classes = MyTestWithWorkflowsApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -43,7 +44,7 @@ public class DaprModuleTests {
     public void myWorkflowTest() throws Exception {
         workflowClient = new DaprWorkflowClient();
 
-        TestWorkflowPayload payload = new TestWorkflowPayload(new ArrayList());
+        TestWorkflowPayload payload = new TestWorkflowPayload(new ArrayList<>());
         String instanceId = workflowClient.scheduleNewWorkflow(TestWorkflow.class, payload);
         
         workflowClient.waitForInstanceStart(instanceId, Duration.ofSeconds(10), false);

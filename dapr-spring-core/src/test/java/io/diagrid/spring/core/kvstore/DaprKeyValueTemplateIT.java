@@ -1,4 +1,4 @@
-package io.diagrid.spring.core.messaging;
+package io.diagrid.spring.core.kvstore;
 
 import io.dapr.client.DaprClientBuilder;
 import io.diagrid.BaseIntegrationTest;
@@ -19,8 +19,7 @@ import java.util.List;
 public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
 
     private final DaprKeyValueTemplate keyValueTemplate = new DaprKeyValueTemplate(new DaprKeyValueAdapter(
-            new DaprClientBuilder().build(), new DaprClientBuilder().buildPreviewClient(),
-            "kvstore", "MyQueryIndex")
+            new DaprClientBuilder().build(), "kvstore")
     );
 
     @Test
@@ -38,8 +37,8 @@ public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
         assertThat(myTypes.iterator().hasNext()).isTrue();
 
         TestType item = myTypes.iterator().next();
-        assertThat(item.id()).isEqualTo(Integer.valueOf(3));
-        assertThat(item.content()).isEqualTo("test");
+        assertThat(item.getId()).isEqualTo(Integer.valueOf(3));
+        assertThat(item.getContent()).isEqualTo("test");
 
         keyValueQuery = new KeyValueQuery<>("'content' == 'asd'");
 
@@ -65,7 +64,7 @@ public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
         types.add(keyValueTemplate.insert(new TestType(10, "test")));
         types.add(keyValueTemplate.insert(new TestType(11, "test")));
 
-        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<String>("'content' == 'test'");
+        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<>("'content' == 'test'");
         keyValueQuery.setRows(100);
         keyValueQuery.setOffset(0);
         Iterable<TestType> myTypes = keyValueTemplate.find(keyValueQuery, TestType.class);
@@ -74,7 +73,8 @@ public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
         var index = 0;
         for(TestType tt : myTypes){
             System.out.println("Index " + index);
-            assertEquals(types.get(index), tt);
+            assertEquals(types.get(index).getId(), tt.getId());
+            assertEquals(types.get(index).getContent(), tt.getContent());
             index++;
         }
         assertEquals(index, types.size());
