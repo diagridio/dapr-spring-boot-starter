@@ -1,6 +1,8 @@
 package io.diagrid.spring.core.keyvalue;
 
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,16 +26,14 @@ import io.dapr.client.domain.State;
 import io.dapr.utils.TypeRef;
 
 public class DaprKeyValueAdapter implements KeyValueAdapter {
-
-    private String queryIndexName;
-    private String statestoreName;
-    private int queryMaxResults = 1000;
-    private DaprClient daprClient;
+    private final DaprClient daprClient;
+    private final ObjectMapper mapper;
+    private final String statestoreName;
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
-    private ObjectMapper mapper = new ObjectMapper();
 
-    public DaprKeyValueAdapter(DaprClient daprClient, String statestoreName) {
+    public DaprKeyValueAdapter(DaprClient daprClient, ObjectMapper mapper, String statestoreName) {
         this.daprClient = daprClient;
+        this.mapper = mapper;
         this.statestoreName = statestoreName;
     }
 
@@ -109,42 +109,36 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         throw new UnsupportedOperationException("Unimplemented method 'clear'");
     }
 
-    private String findStatestoreTypeAndVersion(String statestoreName, List<ComponentMetadata> components) {
-
-        for (ComponentMetadata cm : components) {
-            if (cm.getName().equals(statestoreName)) {
-                return cm.getType() + "-" + cm.getVersion();
-            }
-        }
-        return "";
-    }
-
-     
-
     @Override
     public <T> Iterable<T> find(KeyValueQuery<?> query, String keyspace, Class<T> type) {
-
         DaprMetadata metadata = daprClient.getMetadata().block();
         List<ComponentMetadata> components = metadata.getComponents();
         String statestoreTypeAndVersion = findStatestoreTypeAndVersion(statestoreName, components);
 
+        if (statestoreTypeAndVersion.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        if (!statestoreTypeAndVersion.equals("state.postgresql-v1")) {
+            return Collections.emptyList();
+        }
 
         SpelExpression expression = PARSER.parseRaw(query.getCriteria().toString());
         SpelNode left = expression.getAST().getChild(0);
         SpelNode right = expression.getAST().getChild(1);
 
-        String sqlText = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '" + statestoreName + "||" + type.getName() + "-%' and value->>"+left+"="+right+"";
-        System.out.println(sqlText);
+        String sqlText = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '" + statestoreName + "||" + type.getName() + "-%' and value->>"+left+"="+right;
 
         Map<String, String> queryMetadata = new HashMap<>();
         queryMetadata.put("sql", sqlText);
 
-        if (!statestoreTypeAndVersion.equals("")) {
-            if (statestoreTypeAndVersion.equals("state.postgresql-v1")) {
-                return daprClient.invokeBindingList("kvbinding", "query", null, queryMetadata, TypeRef.get(type)).block();
-            }
-        }
-        return null;
+        TypeRef<List<List<String>>> typeRef = new TypeRef<>() {};
+        var result = daprClient.invokeBinding("kvbinding", "query", null, queryMetadata, typeRef).block();
+
+        return result.stream()
+                .flatMap(Collection::stream)
+                .map(string -> deserialize(string, type))
+                .toList();
     }
 
     @Override
@@ -159,6 +153,20 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         throw new UnsupportedOperationException("Unimplemented method 'count'");
     }
 
+    private String findStatestoreTypeAndVersion(String statestoreName, List<ComponentMetadata> components) {
+        for (ComponentMetadata cm : components) {
+            if (cm.getName().equals(statestoreName)) {
+                return cm.getType() + "-" + cm.getVersion();
+            }
+        }
+        return "";
+    }
 
-    
+    private <T> T deserialize(String string, Class<T> type) {
+        try {
+            return mapper.readValue(string, type);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

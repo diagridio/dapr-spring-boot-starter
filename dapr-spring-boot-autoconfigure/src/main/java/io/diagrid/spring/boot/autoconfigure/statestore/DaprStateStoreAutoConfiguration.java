@@ -1,5 +1,6 @@
 package io.diagrid.spring.boot.autoconfigure.statestore;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -20,8 +21,8 @@ public class DaprStateStoreAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public DaprKeyValueAdapter keyValueAdapter(DaprClientBuilder daprClientBuilder, DaprStateStoreProperties daprStateStoreProperties) {
-        return new DaprKeyValueAdapter(daprClientBuilder.build(), daprStateStoreProperties.getName());
+    public DaprKeyValueAdapter keyValueAdapter(DaprClientBuilder daprClientBuilder, ObjectMapper mapper, DaprStateStoreProperties daprStateStoreProperties) {
+        return new DaprKeyValueAdapter(daprClientBuilder.build(), mapper, daprStateStoreProperties.getName());
     }
 
     @Bean

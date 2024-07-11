@@ -1,5 +1,7 @@
 package io.diagrid.spring.core.kvstore;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
 import io.diagrid.BaseIntegrationTest;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapter;
@@ -12,15 +14,16 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Integration tests for {@link DaprKeyValueTemplateIT}.
  */
 public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
-
-    private final DaprKeyValueTemplate keyValueTemplate = new DaprKeyValueTemplate(new DaprKeyValueAdapter(
-            new DaprClientBuilder().build(), "kvstore")
-    );
+    private final DaprClient daprClient = new DaprClientBuilder().build();
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final DaprKeyValueAdapter daprKeyValueAdapter = new DaprKeyValueAdapter(daprClient, mapper, "kvstore");
+    private final DaprKeyValueTemplate keyValueTemplate = new DaprKeyValueTemplate(daprKeyValueAdapter);
 
     @Test
     public void testInsertAndQueryDaprKeyValueTemplate() {
