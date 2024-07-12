@@ -28,6 +28,7 @@ import io.dapr.utils.TypeRef;
 public class DaprKeyValueAdapter implements KeyValueAdapter {
     private static final Map<String, String> CONTENT_TYPE_META = Map.of("contentType", "application/json");
     private static final String DELETE_BY_KEYSPACE_SQL_PATTERN = "delete from state where key LIKE '%s'";
+    private static final String SELECT_BY_KEYSPACE_SQL_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s'";
     private static final String SELECT_SQL_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s' and value->>%s=%s";
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
@@ -111,14 +112,26 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public Iterable<?> getAllOf(String keyspace) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAllOf'");
+        return getAllOf(keyspace, Object.class);
+    }
+
+    @Override
+    public <T> Iterable<T> getAllOf(String keyspace, Class<T> type) {
+        var keyspaceFilter = getKeyspaceFilter(keyspace);
+        var sql = String.format(SELECT_BY_KEYSPACE_SQL_PATTERN, keyspaceFilter);
+        var meta = Map.of("sql", sql);
+        var typeRef = new TypeRef<List<List<String>>>() {};
+        var result = daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
+
+        return result.stream()
+                .flatMap(Collection::stream)
+                .map(string -> deserialize(string, type))
+                .toList();
     }
 
     @Override
     public CloseableIterator<Entry<Object, Object>> entries(String keyspace) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'entries'");
+        throw new UnsupportedOperationException("'entries' method is not supported");
     }
 
     @Override
