@@ -11,6 +11,7 @@ public class DaprStateStoreProperties {
      * Name of the StateStore Dapr component.
      */
     private String name;
+    private String binding;
 
     public String getName() {
         return name;
@@ -20,4 +21,11 @@ public class DaprStateStoreProperties {
         this.name = name;
     }
 
+    public String getBinding() {
+        return binding;
+    }
+
+    public void setBinding(String binding) {
+        this.binding = binding;
+    }
 }

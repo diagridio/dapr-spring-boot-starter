@@ -26,15 +26,20 @@ import io.dapr.client.domain.State;
 import io.dapr.utils.TypeRef;
 
 public class DaprKeyValueAdapter implements KeyValueAdapter {
+    private static final String KEY_SEPARATOR = "-";
+
     private final DaprClient daprClient;
     private final ObjectMapper mapper;
-    private final String statestoreName;
+    private final String stateStoreName;
+    private final String stateStoreBinding;
+    private static final Map<String, String> CONTENT_TYPE_META = Map.of("contentType", "application/json");
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
-    public DaprKeyValueAdapter(DaprClient daprClient, ObjectMapper mapper, String statestoreName) {
+    public DaprKeyValueAdapter(DaprClient daprClient, ObjectMapper mapper, String stateStoreName, String stateStoreBinding) {
         this.daprClient = daprClient;
         this.mapper = mapper;
-        this.statestoreName = statestoreName;
+        this.stateStoreName = stateStoreName;
+        this.stateStoreBinding = stateStoreBinding;
     }
 
     @Override
@@ -44,9 +49,9 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public Object put(Object id, Object item, String keyspace) {
-        Map<String, String> meta = Map.of("contentType", "application/json");
-        SaveStateRequest request = new SaveStateRequest(statestoreName)
-                .setStates(new State<>(keyspace + "-" + id.toString(), item, null, meta, null));
+        String key = resolveKey(keyspace, id);
+        State<Object> state = new State<>(key, item, null, CONTENT_TYPE_META, null);
+        SaveStateRequest request = new SaveStateRequest(stateStoreName).setStates(state);
 
         daprClient.saveBulkState(request).block();
 
@@ -55,34 +60,52 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public boolean contains(Object id, String keyspace) {
-        return (get(id, keyspace) != null);
-
+        return get(id, keyspace) != null;
     }
 
     @Override
     public Object get(Object id, String keyspace) {
-        return daprClient.getState(statestoreName, keyspace + "-" + id.toString(), Object.class).block().getValue();
+        String key = resolveKey(keyspace, id);
+
+        return daprClient.getState(stateStoreName, key, Object.class).block().getValue();
     }
 
     @Override
     public <T> T get(Object id, String keyspace, Class<T> type) {
-        Map<String, String> meta = Map.of("contentType", "application/json");
-        GetStateRequest stateRequest = new GetStateRequest(statestoreName, keyspace + "-" + id.toString())
-                .setMetadata(meta);
+        String key = resolveKey(keyspace, id);
+        GetStateRequest stateRequest = new GetStateRequest(stateStoreName, key).setMetadata(CONTENT_TYPE_META);
+
         return daprClient.getState(stateRequest, TypeRef.get(type)).block().getValue();
     }
 
     @Override
     public Object delete(Object id, String keyspace) {
-        daprClient.deleteState(statestoreName, keyspace + "-" + id.toString()).block();
-        return null;
+        var result = get(id, keyspace);
+
+        if (result == null) {
+            return null;
+        }
+
+        String key = resolveKey(keyspace, id);
+
+        daprClient.deleteState(stateStoreName, key).block();
+
+        return result;
     }
 
     @Override
     public <T> T delete(Object id, String keyspace, Class<T> type) {
-        // TODO Auto-generated method stub
-        // daprClient.deleteState(keyspace, id.toString()).block();
-        return null;
+        var result = get(id, keyspace, type);
+
+        if (result == null) {
+            return null;
+        }
+
+        String key = resolveKey(keyspace, id);
+
+        daprClient.deleteState(stateStoreName, key).block();
+
+        return result;
     }
 
     @Override
@@ -112,13 +135,13 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
     public <T> Iterable<T> find(KeyValueQuery<?> query, String keyspace, Class<T> type) {
         DaprMetadata metadata = daprClient.getMetadata().block();
         List<ComponentMetadata> components = metadata.getComponents();
-        String statestoreTypeAndVersion = findStatestoreTypeAndVersion(statestoreName, components);
+        String stateStoreTypeAndVersion = findStateStoreTypeAndVersion(stateStoreName, components);
 
-        if (statestoreTypeAndVersion.isEmpty()) {
+        if (stateStoreTypeAndVersion.isEmpty()) {
             return Collections.emptyList();
         }
 
-        if (!statestoreTypeAndVersion.equals("state.postgresql-v1")) {
+        if (!stateStoreTypeAndVersion.equals("state.postgresql-v1")) {
             return Collections.emptyList();
         }
 
@@ -126,13 +149,13 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         SpelNode left = expression.getAST().getChild(0);
         SpelNode right = expression.getAST().getChild(1);
 
-        String sqlText = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '" + statestoreName + "||" + type.getName() + "-%' and value->>"+left+"="+right;
+        String sqlText = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '" + stateStoreName + "||" + keyspace + "-%' and value->>"+left+"="+right;
 
         Map<String, String> queryMetadata = new HashMap<>();
         queryMetadata.put("sql", sqlText);
 
         TypeRef<List<List<String>>> typeRef = new TypeRef<>() {};
-        var result = daprClient.invokeBinding("kvbinding", "query", null, queryMetadata, typeRef).block();
+        var result = daprClient.invokeBinding(stateStoreBinding, "query", null, queryMetadata, typeRef).block();
 
         return result.stream()
                 .flatMap(Collection::stream)
@@ -152,13 +175,17 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         throw new UnsupportedOperationException("Unimplemented method 'count'");
     }
 
-    private String findStatestoreTypeAndVersion(String statestoreName, List<ComponentMetadata> components) {
+    private String findStateStoreTypeAndVersion(String statestoreName, List<ComponentMetadata> components) {
         for (ComponentMetadata cm : components) {
             if (cm.getName().equals(statestoreName)) {
                 return cm.getType() + "-" + cm.getVersion();
             }
         }
         return "";
+    }
+
+    private String resolveKey(String keyspace, Object id) {
+        return keyspace + KEY_SEPARATOR + id.toString();
     }
 
     private <T> T deserialize(String string, Class<T> type) {
