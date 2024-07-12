@@ -5,9 +5,9 @@ import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
 import io.diagrid.BaseIntegrationTest;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapter;
-import io.diagrid.spring.core.keyvalue.DaprKeyValueTemplate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.keyvalue.core.KeyValueTemplate;
 import org.springframework.data.keyvalue.core.query.KeyValueQuery;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +29,7 @@ public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
             "kvstore",
             "kvbinding"
     );
-    private final DaprKeyValueTemplate keyValueTemplate = new DaprKeyValueTemplate(daprKeyValueAdapter);
+    private final KeyValueTemplate keyValueTemplate = new KeyValueTemplate(daprKeyValueAdapter);
 
     @AfterEach
     public void tearDown() {
@@ -101,6 +101,19 @@ public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
 
         var updatedType = keyValueTemplate.update(new TestType(itemId, "test2"));
         assertThat(updatedType).isNotNull();
+    }
+
+    @Test
+    public void testDeleteAllOfDaprKeyValueTemplate() {
+        var itemId = 1;
+        var insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
+        assertThat(insertedType).isNotNull();
+
+        keyValueTemplate.delete(TestType.class);
+
+        var result = keyValueTemplate.findById(itemId, TestType.class);
+
+        assertThat(result).isEmpty();
     }
 
 }
