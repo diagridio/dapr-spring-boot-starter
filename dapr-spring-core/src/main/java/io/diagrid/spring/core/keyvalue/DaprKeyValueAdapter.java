@@ -27,7 +27,6 @@ import io.dapr.utils.TypeRef;
 
 public class DaprKeyValueAdapter implements KeyValueAdapter {
     private static final Map<String, String> CONTENT_TYPE_META = Map.of("contentType", "application/json");
-    private static final String DELETE_ALL_SQL = "delete from state";
     private static final String DELETE_BY_KEYSPACE_SQL_PATTERN = "delete from state where key LIKE '%s'";
     private static final String SELECT_SQL_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s' and value->>%s=%s";
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
@@ -133,9 +132,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public void clear() {
-        var meta = Map.of("sql", DELETE_ALL_SQL);
-
-        daprClient.invokeBinding(stateStoreBinding, "exec", null, meta).block();
+        throw new UnsupportedOperationException("'clear' method is not supported");
     }
 
     @Override

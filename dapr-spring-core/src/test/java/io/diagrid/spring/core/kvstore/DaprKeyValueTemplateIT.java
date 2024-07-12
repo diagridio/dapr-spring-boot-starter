@@ -104,19 +104,6 @@ public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
     }
 
     @Test
-    public void testDestroyDaprKeyValueTemplate() throws Exception {
-        var itemId = 1;
-        var insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
-        assertThat(insertedType).isNotNull();
-
-        keyValueTemplate.destroy();
-
-        var result = keyValueTemplate.findById(itemId, TestType.class);
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
     public void testDeleteAllOfDaprKeyValueTemplate() {
         var itemId = 1;
         var insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
