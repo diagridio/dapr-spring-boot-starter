@@ -26,14 +26,16 @@ import io.dapr.client.domain.State;
 import io.dapr.utils.TypeRef;
 
 public class DaprKeyValueAdapter implements KeyValueAdapter {
-    private static final String KEY_SEPARATOR = "-";
+    private static final Map<String, String> CONTENT_TYPE_META = Map.of("contentType", "application/json");
+    private static final String DELETE_ALL_SQL = "delete from state";
+    private static final String DELETE_BY_KEYSPACE_SQL_PATTERN = "delete from state where key LIKE '%s'";
+    private static final String SELECT_SQL_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s' and value->>%s=%s";
+    private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
     private final DaprClient daprClient;
     private final ObjectMapper mapper;
     private final String stateStoreName;
     private final String stateStoreBinding;
-    private static final Map<String, String> CONTENT_TYPE_META = Map.of("contentType", "application/json");
-    private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
     public DaprKeyValueAdapter(DaprClient daprClient, ObjectMapper mapper, String stateStoreName, String stateStoreBinding) {
         this.daprClient = daprClient;
@@ -122,13 +124,18 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public void deleteAllOf(String keyspace) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deleteAllOf'");
+        var keyspaceFilter = getKeyspaceFilter(keyspace);
+        var sql = String.format(DELETE_BY_KEYSPACE_SQL_PATTERN, keyspaceFilter);
+        var meta = Map.of("sql", sql);
+
+        daprClient.invokeBinding(stateStoreBinding, "exec", null, meta).block();
     }
 
     @Override
     public void clear() {
+        var meta = Map.of("sql", DELETE_ALL_SQL);
 
+        daprClient.invokeBinding(stateStoreBinding, "exec", null, meta).block();
     }
 
     @Override
@@ -148,14 +155,14 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         SpelExpression expression = PARSER.parseRaw(query.getCriteria().toString());
         SpelNode left = expression.getAST().getChild(0);
         SpelNode right = expression.getAST().getChild(1);
+        String keyspaceFilter = getKeyspaceFilter(keyspace);
+        String sql = String.format(SELECT_SQL_PATTERN, keyspaceFilter, left, right);
 
-        String sqlText = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '" + stateStoreName + "||" + keyspace + "-%' and value->>"+left+"="+right;
-
-        Map<String, String> queryMetadata = new HashMap<>();
-        queryMetadata.put("sql", sqlText);
+        Map<String, String> meta = new HashMap<>();
+        meta.put("sql", sql);
 
         TypeRef<List<List<String>>> typeRef = new TypeRef<>() {};
-        var result = daprClient.invokeBinding(stateStoreBinding, "query", null, queryMetadata, typeRef).block();
+        var result = daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
 
         return result.stream()
                 .flatMap(Collection::stream)
@@ -185,7 +192,11 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
     }
 
     private String resolveKey(String keyspace, Object id) {
-        return keyspace + KEY_SEPARATOR + id.toString();
+        return String.format("%s-%s", keyspace, id);
+    }
+
+    private String getKeyspaceFilter(String keyspace) {
+        return String.format("%s||%s-%%", stateStoreName, keyspace);
     }
 
     private <T> T deserialize(String string, Class<T> type) {
