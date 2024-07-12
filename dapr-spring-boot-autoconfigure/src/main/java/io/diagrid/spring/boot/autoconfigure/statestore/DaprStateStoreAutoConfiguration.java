@@ -22,7 +22,11 @@ public class DaprStateStoreAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public DaprKeyValueAdapter keyValueAdapter(DaprClientBuilder daprClientBuilder, ObjectMapper mapper, DaprStateStoreProperties daprStateStoreProperties) {
-        return new DaprKeyValueAdapter(daprClientBuilder.build(), mapper, daprStateStoreProperties.getName());
+        DaprClient daprClient = daprClientBuilder.build();
+        String stateStoreName = daprStateStoreProperties.getName();
+        String stateStoreBinding = daprStateStoreProperties.getBinding();
+
+        return new DaprKeyValueAdapter(daprClient, mapper, stateStoreName, stateStoreBinding);
     }
 
     @Bean

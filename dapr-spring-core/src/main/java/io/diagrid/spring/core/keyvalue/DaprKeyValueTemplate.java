@@ -26,7 +26,7 @@ public class DaprKeyValueTemplate implements DaprKeyValueOperations, Application
     private final IdentifierGenerator identifierGenerator;
     private final MappingContext<? extends KeyValuePersistentEntity<?, ?>, ? extends KeyValuePersistentProperty<?>> mappingContext;
     private final KeyValueAdapter adapter;
-    private PersistenceExceptionTranslator exceptionTranslator = DEFAULT_PERSISTENCE_EXCEPTION_TRANSLATOR;
+    private final PersistenceExceptionTranslator exceptionTranslator = DEFAULT_PERSISTENCE_EXCEPTION_TRANSLATOR;
 
     public DaprKeyValueTemplate(KeyValueAdapter adapter) {
         this(adapter, new KeyValueMappingContext<>(), DefaultIdentifierGenerator.INSTANCE);
