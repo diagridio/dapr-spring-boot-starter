@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Integration tests for {@link DaprKeyValueTemplateIT}.
@@ -40,15 +41,15 @@ public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
 
     @Test
     public void testInsertAndQueryDaprKeyValueTemplate() {
-        var itemId = 3;
-        var savedType = keyValueTemplate.insert(new TestType(itemId, "test"));
+        int itemId = 3;
+        TestType savedType = keyValueTemplate.insert(new TestType(itemId, "test"));
         assertThat(savedType).isNotNull();
 
-        var findById = keyValueTemplate.findById(itemId, TestType.class).get();
-        assertThat(findById).isNotNull();
-        assertThat(findById).isEqualTo(savedType);
+        Optional<TestType> findById = keyValueTemplate.findById(itemId, TestType.class);
+        assertThat(findById.isEmpty()).isFalse();
+        assertThat(findById.get()).isEqualTo(savedType);
 
-        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<String>("'content' == 'test'");
+        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<>("'content' == 'test'");
 
         Iterable<TestType> myTypes = keyValueTemplate.find(keyValueQuery, TestType.class);
         assertThat(myTypes.iterator().hasNext()).isTrue();
@@ -79,10 +80,10 @@ public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
         Iterable<TestType> foundItems = keyValueTemplate.find(keyValueQuery, TestType.class);
         assertThat(foundItems.iterator().hasNext()).isTrue();
 
-        var index = 0;
+        int index = 0;
 
         for(TestType foundItem : foundItems){
-            var item = items.get(index);
+            TestType item = items.get(index);
 
             assertEquals(item.getId(), foundItem.getId());
             assertEquals(item.getContent(), foundItem.getContent());
@@ -95,36 +96,62 @@ public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
 
     @Test
     public void testUpdateDaprKeyValueTemplate() {
-        var itemId = 2;
-        var insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
+        int itemId = 2;
+        TestType insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
         assertThat(insertedType).isNotNull();
 
-        var updatedType = keyValueTemplate.update(new TestType(itemId, "test2"));
+        TestType updatedType = keyValueTemplate.update(new TestType(itemId, "test2"));
         assertThat(updatedType).isNotNull();
     }
 
     @Test
     public void testDeleteAllOfDaprKeyValueTemplate() {
-        var itemId = 1;
-        var insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
+        int itemId = 1;
+        TestType insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
         assertThat(insertedType).isNotNull();
 
         keyValueTemplate.delete(TestType.class);
 
-        var result = keyValueTemplate.findById(itemId, TestType.class);
+        Optional<TestType> result = keyValueTemplate.findById(itemId, TestType.class);
 
         assertThat(result).isEmpty();
     }
 
     @Test
     public void testGetAllOfDaprKeyValueTemplate() {
-        var itemId = 1;
-        var insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
+        int itemId = 1;
+        TestType insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
         assertThat(insertedType).isNotNull();
 
         Iterable<TestType> result = keyValueTemplate.findAll(TestType.class);
 
         assertThat(result.iterator().hasNext()).isTrue();
+    }
+
+    @Test
+    public void testCountDaprKeyValueTemplate() {
+        int itemId = 1;
+        TestType insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
+        assertThat(insertedType).isNotNull();
+
+        long result = keyValueTemplate.count(TestType.class);
+
+        assertThat(result).isEqualTo(1);
+    }
+
+    @Test
+    public void testCountWithQueryDaprKeyValueTemplate() {
+        int itemId = 1;
+        TestType insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
+        assertThat(insertedType).isNotNull();
+
+        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<>("'content' == 'test'");
+        keyValueQuery.setRows(100);
+        keyValueQuery.setOffset(0);
+
+        long result = keyValueTemplate.count(keyValueQuery, TestType.class);
+
+        assertThat(result).isEqualTo(1);
     }
 
 }

@@ -3,11 +3,15 @@ package io.diagrid.spring.core.keyvalue;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import io.dapr.client.domain.ComponentMetadata;
+import io.dapr.client.domain.DaprMetadata;
+import io.dapr.client.domain.GetStateRequest;
+import io.dapr.client.domain.SaveStateRequest;
+import io.dapr.client.domain.State;
 import org.springframework.data.keyvalue.core.KeyValueAdapter;
 import org.springframework.data.keyvalue.core.query.KeyValueQuery;
 import org.springframework.data.util.CloseableIterator;
@@ -18,18 +22,16 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.dapr.client.DaprClient;
-import io.dapr.client.domain.ComponentMetadata;
-import io.dapr.client.domain.DaprMetadata;
-import io.dapr.client.domain.GetStateRequest;
-import io.dapr.client.domain.SaveStateRequest;
-import io.dapr.client.domain.State;
 import io.dapr.utils.TypeRef;
 
 public class DaprKeyValueAdapter implements KeyValueAdapter {
     private static final Map<String, String> CONTENT_TYPE_META = Map.of("contentType", "application/json");
-    private static final String DELETE_BY_KEYSPACE_SQL_PATTERN = "delete from state where key LIKE '%s'";
-    private static final String SELECT_BY_KEYSPACE_SQL_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s'";
-    private static final String SELECT_SQL_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s' and value->>%s=%s";
+    private static final String DELETE_BY_KEYSPACE_PATTERN = "delete from state where key LIKE '%s'";
+    private static final String SELECT_BY_KEYSPACE_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s'";
+    private static final String SELECT_BY_FILTER_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s' and value->>%s=%s";
+    private static final String COUNT_BY_KEYSPACE_PATTERN = "select count(*) as value from state where key LIKE '%s'";
+    private static final String COUNT_BY_FILTER_PATTERN = "select count(*) as value from state where key LIKE '%s' and value->>%s=%s";
+
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
     private final DaprClient daprClient;
@@ -82,7 +84,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public Object delete(Object id, String keyspace) {
-        var result = get(id, keyspace);
+        Object result = get(id, keyspace);
 
         if (result == null) {
             return null;
@@ -97,7 +99,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public <T> T delete(Object id, String keyspace, Class<T> type) {
-        var result = get(id, keyspace, type);
+        T result = get(id, keyspace, type);
 
         if (result == null) {
             return null;
@@ -117,11 +119,9 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public <T> Iterable<T> getAllOf(String keyspace, Class<T> type) {
-        var keyspaceFilter = getKeyspaceFilter(keyspace);
-        var sql = String.format(SELECT_BY_KEYSPACE_SQL_PATTERN, keyspaceFilter);
-        var meta = Map.of("sql", sql);
-        var typeRef = new TypeRef<List<List<String>>>() {};
-        var result = daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
+        String sql = createSql(SELECT_BY_KEYSPACE_PATTERN, keyspace);
+        TypeRef<List<List<String>>> typeRef = new TypeRef<>() {};
+        List<List<String>> result = queryUsingBinding(sql, typeRef);
 
         return result.stream()
                 .flatMap(Collection::stream)
@@ -136,11 +136,9 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public void deleteAllOf(String keyspace) {
-        var keyspaceFilter = getKeyspaceFilter(keyspace);
-        var sql = String.format(DELETE_BY_KEYSPACE_SQL_PATTERN, keyspaceFilter);
-        var meta = Map.of("sql", sql);
+        String sql = createSql(DELETE_BY_KEYSPACE_PATTERN, keyspace);
 
-        daprClient.invokeBinding(stateStoreBinding, "exec", null, meta).block();
+        execUsingBinding(sql);
     }
 
     @Override
@@ -152,7 +150,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
     public <T> Iterable<T> find(KeyValueQuery<?> query, String keyspace, Class<T> type) {
         DaprMetadata metadata = daprClient.getMetadata().block();
         List<ComponentMetadata> components = metadata.getComponents();
-        String stateStoreTypeAndVersion = findStateStoreTypeAndVersion(stateStoreName, components);
+        String stateStoreTypeAndVersion = findStateStoreTypeAndVersion(components);
 
         if (stateStoreTypeAndVersion.isEmpty()) {
             return Collections.emptyList();
@@ -162,17 +160,9 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
             return Collections.emptyList();
         }
 
-        SpelExpression expression = PARSER.parseRaw(query.getCriteria().toString());
-        SpelNode left = expression.getAST().getChild(0);
-        SpelNode right = expression.getAST().getChild(1);
-        String keyspaceFilter = getKeyspaceFilter(keyspace);
-        String sql = String.format(SELECT_SQL_PATTERN, keyspaceFilter, left, right);
-
-        Map<String, String> meta = new HashMap<>();
-        meta.put("sql", sql);
-
+        String sql = createSql(SELECT_BY_FILTER_PATTERN, keyspace, query);
         TypeRef<List<List<String>>> typeRef = new TypeRef<>() {};
-        var result = daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
+        List<List<String>> result = queryUsingBinding(sql, typeRef);
 
         return result.stream()
                 .flatMap(Collection::stream)
@@ -182,19 +172,31 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public long count(String keyspace) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'count'");
+        String sql = createSql(COUNT_BY_KEYSPACE_PATTERN, keyspace);
+        TypeRef<List<List<Long>>> typeRef = new TypeRef<>() {};
+        List<List<Long>> result = queryUsingBinding(sql, typeRef);
+
+        return result.stream()
+                .flatMap(Collection::stream)
+                .toList()
+                .get(0);
     }
 
     @Override
     public long count(KeyValueQuery<?> query, String keyspace) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'count'");
+        String sql = createSql(COUNT_BY_FILTER_PATTERN, keyspace, query);
+        TypeRef<List<List<Long>>> typeRef = new TypeRef<>() {};
+        List<List<Long>> result = queryUsingBinding(sql, typeRef);
+
+        return result.stream()
+                .flatMap(Collection::stream)
+                .toList()
+                .get(0);
     }
 
-    private String findStateStoreTypeAndVersion(String statestoreName, List<ComponentMetadata> components) {
+    private String findStateStoreTypeAndVersion(List<ComponentMetadata> components) {
         for (ComponentMetadata cm : components) {
-            if (cm.getName().equals(statestoreName)) {
+            if (cm.getName().equals(stateStoreName)) {
                 return cm.getType() + "-" + cm.getVersion();
             }
         }
@@ -205,8 +207,35 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         return String.format("%s-%s", keyspace, id);
     }
 
+    private String createSql(String sqlPattern, String keyspace) {
+        String keyspaceFilter = getKeyspaceFilter(keyspace);
+
+        return String.format(sqlPattern, keyspaceFilter);
+    }
+
+    private String createSql(String sqlPattern, String keyspace, KeyValueQuery<?> query) {
+        SpelExpression expression = PARSER.parseRaw(query.getCriteria().toString());
+        SpelNode left = expression.getAST().getChild(0);
+        SpelNode right = expression.getAST().getChild(1);
+        String keyspaceFilter = getKeyspaceFilter(keyspace);
+
+        return String.format(sqlPattern, keyspaceFilter, left, right);
+    }
+
     private String getKeyspaceFilter(String keyspace) {
         return String.format("%s||%s-%%", stateStoreName, keyspace);
+    }
+
+    private void execUsingBinding(String sql) {
+        Map<String, String> meta = Map.of("sql", sql);
+
+        daprClient.invokeBinding(stateStoreBinding, "exec", null, meta).block();
+    }
+
+    private <T> T queryUsingBinding(String sql, TypeRef<T> typeRef) {
+        Map<String, String> meta = Map.of("sql", sql);
+
+        return daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
     }
 
     private <T> T deserialize(String string, Class<T> type) {
