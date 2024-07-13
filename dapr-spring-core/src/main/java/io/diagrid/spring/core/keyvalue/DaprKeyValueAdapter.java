@@ -7,7 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import io.dapr.client.domain.*;
+import io.dapr.client.domain.ComponentMetadata;
+import io.dapr.client.domain.DaprMetadata;
+import io.dapr.client.domain.GetStateRequest;
+import io.dapr.client.domain.SaveStateRequest;
+import io.dapr.client.domain.State;
 import org.springframework.data.keyvalue.core.KeyValueAdapter;
 import org.springframework.data.keyvalue.core.query.KeyValueQuery;
 import org.springframework.data.util.CloseableIterator;
