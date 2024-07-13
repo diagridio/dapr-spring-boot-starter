@@ -142,7 +142,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         String sql = createSql(DELETE_BY_KEYSPACE_PATTERN, keyspace);
         Map<String, String> meta = Map.of("sql", sql);
 
-        daprClient.invokeBinding(stateStoreBinding, "exec", null, meta).block();
+        execUsingBinding(meta);
     }
 
     @Override
@@ -167,13 +167,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         String sql = createSql(SELECT_BY_FILTER_PATTERN, keyspace, query);
         Map<String, String> meta = Map.of("sql", sql);
         TypeRef<List<List<String>>> typeRef = new TypeRef<>() {};
-        List<List<String>> result = daprClient.invokeBinding(
-                stateStoreBinding,
-                "query",
-                null,
-                meta,
-                typeRef
-        ).block();
+        List<List<String>> result = queryUsingBinding(meta, typeRef);
 
         return result.stream()
                 .flatMap(Collection::stream)
@@ -186,13 +180,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         String sql = createSql(COUNT_BY_KEYSPACE_PATTERN, keyspace);
         Map<String, String> meta = Map.of("sql", sql);
         TypeRef<List<List<Long>>> typeRef = new TypeRef<>() {};
-        List<List<Long>> result = daprClient.invokeBinding(
-                stateStoreBinding,
-                "query",
-                null,
-                meta,
-                typeRef
-        ).block();
+        List<List<Long>> result = queryUsingBinding(meta, typeRef);
 
         return result.stream()
                 .flatMap(Collection::stream)
@@ -205,13 +193,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         String sql = createSql(COUNT_BY_FILTER_PATTERN, keyspace, query);
         Map<String, String> meta = Map.of("sql", sql);
         TypeRef<List<List<Long>>> typeRef = new TypeRef<>() {};
-        List<List<Long>> result = daprClient.invokeBinding(
-                stateStoreBinding,
-                "query",
-                null,
-                meta,
-                typeRef
-        ).block();
+        List<List<Long>> result = queryUsingBinding(meta, typeRef);
 
         return result.stream()
                 .flatMap(Collection::stream)
@@ -249,6 +231,14 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     private String getKeyspaceFilter(String keyspace) {
         return String.format("%s||%s-%%", stateStoreName, keyspace);
+    }
+
+    private void execUsingBinding(Map<String, String> meta) {
+        daprClient.invokeBinding(stateStoreBinding, "exec", null, meta).block();
+    }
+
+    private <T> T queryUsingBinding(Map<String, String> meta, TypeRef<T> typeRef) {
+        return daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
     }
 
     private <T> T deserialize(String string, Class<T> type) {
