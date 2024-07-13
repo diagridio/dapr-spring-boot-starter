@@ -122,13 +122,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         String sql = createSql(SELECT_BY_KEYSPACE_PATTERN, keyspace);
         Map<String, String> meta = Map.of("sql", sql);
         TypeRef<List<List<String>>> typeRef = new TypeRef<>() {};
-        List<List<String>> result = daprClient.invokeBinding(
-                stateStoreBinding,
-                "query",
-                null,
-                meta,
-                typeRef
-        ).block();
+        List<List<String>> result = queryUsingBinding(meta, typeRef);
 
         return result.stream()
                 .flatMap(Collection::stream)
