@@ -3,7 +3,6 @@ package io.diagrid.spring.core.keyvalue;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,9 +26,12 @@ import io.dapr.utils.TypeRef;
 
 public class DaprKeyValueAdapter implements KeyValueAdapter {
     private static final Map<String, String> CONTENT_TYPE_META = Map.of("contentType", "application/json");
-    private static final String DELETE_BY_KEYSPACE_SQL_PATTERN = "delete from state where key LIKE '%s'";
-    private static final String SELECT_BY_KEYSPACE_SQL_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s'";
-    private static final String SELECT_SQL_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s' and value->>%s=%s";
+    private static final String DELETE_BY_KEYSPACE_PATTERN = "delete from state where key LIKE '%s'";
+    private static final String SELECT_BY_KEYSPACE_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s'";
+    private static final String SELECT_BY_FILTER_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s' and value->>%s=%s";
+    private static final String COUNT_BY_KEYSPACE_PATTERN = "select count(*) as value from state where key LIKE '%s'";
+    private static final String COUNT_BY_FILTER_PATTERN = "select count(*) as value from state where key LIKE '%s' and value->>%s=%s";
+
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
     private final DaprClient daprClient;
@@ -51,9 +53,9 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public Object put(Object id, Object item, String keyspace) {
-        String key = resolveKey(keyspace, id);
-        State<Object> state = new State<>(key, item, null, CONTENT_TYPE_META, null);
-        SaveStateRequest request = new SaveStateRequest(stateStoreName).setStates(state);
+        var key = resolveKey(keyspace, id);
+        var state = new State<>(key, item, null, CONTENT_TYPE_META, null);
+        var request = new SaveStateRequest(stateStoreName).setStates(state);
 
         daprClient.saveBulkState(request).block();
 
@@ -67,15 +69,15 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public Object get(Object id, String keyspace) {
-        String key = resolveKey(keyspace, id);
+        var key = resolveKey(keyspace, id);
 
         return daprClient.getState(stateStoreName, key, Object.class).block().getValue();
     }
 
     @Override
     public <T> T get(Object id, String keyspace, Class<T> type) {
-        String key = resolveKey(keyspace, id);
-        GetStateRequest stateRequest = new GetStateRequest(stateStoreName, key).setMetadata(CONTENT_TYPE_META);
+        var key = resolveKey(keyspace, id);
+        var stateRequest = new GetStateRequest(stateStoreName, key).setMetadata(CONTENT_TYPE_META);
 
         return daprClient.getState(stateRequest, TypeRef.get(type)).block().getValue();
     }
@@ -88,7 +90,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
             return null;
         }
 
-        String key = resolveKey(keyspace, id);
+        var key = resolveKey(keyspace, id);
 
         daprClient.deleteState(stateStoreName, key).block();
 
@@ -103,7 +105,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
             return null;
         }
 
-        String key = resolveKey(keyspace, id);
+        var key = resolveKey(keyspace, id);
 
         daprClient.deleteState(stateStoreName, key).block();
 
@@ -117,8 +119,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public <T> Iterable<T> getAllOf(String keyspace, Class<T> type) {
-        var keyspaceFilter = getKeyspaceFilter(keyspace);
-        var sql = String.format(SELECT_BY_KEYSPACE_SQL_PATTERN, keyspaceFilter);
+        var sql = createSql(SELECT_BY_KEYSPACE_PATTERN, keyspace);
         var meta = Map.of("sql", sql);
         var typeRef = new TypeRef<List<List<String>>>() {};
         var result = daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
@@ -136,8 +137,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public void deleteAllOf(String keyspace) {
-        var keyspaceFilter = getKeyspaceFilter(keyspace);
-        var sql = String.format(DELETE_BY_KEYSPACE_SQL_PATTERN, keyspaceFilter);
+        var sql = createSql(DELETE_BY_KEYSPACE_PATTERN, keyspace);
         var meta = Map.of("sql", sql);
 
         daprClient.invokeBinding(stateStoreBinding, "exec", null, meta).block();
@@ -150,9 +150,9 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public <T> Iterable<T> find(KeyValueQuery<?> query, String keyspace, Class<T> type) {
-        DaprMetadata metadata = daprClient.getMetadata().block();
-        List<ComponentMetadata> components = metadata.getComponents();
-        String stateStoreTypeAndVersion = findStateStoreTypeAndVersion(stateStoreName, components);
+        var metadata = daprClient.getMetadata().block();
+        var components = metadata.getComponents();
+        var stateStoreTypeAndVersion = findStateStoreTypeAndVersion(components);
 
         if (stateStoreTypeAndVersion.isEmpty()) {
             return Collections.emptyList();
@@ -162,16 +162,9 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
             return Collections.emptyList();
         }
 
-        SpelExpression expression = PARSER.parseRaw(query.getCriteria().toString());
-        SpelNode left = expression.getAST().getChild(0);
-        SpelNode right = expression.getAST().getChild(1);
-        String keyspaceFilter = getKeyspaceFilter(keyspace);
-        String sql = String.format(SELECT_SQL_PATTERN, keyspaceFilter, left, right);
-
-        Map<String, String> meta = new HashMap<>();
-        meta.put("sql", sql);
-
-        TypeRef<List<List<String>>> typeRef = new TypeRef<>() {};
+        var sql = createSql(SELECT_BY_FILTER_PATTERN, keyspace, query);
+        var meta = Map.of("sql", sql);
+        var typeRef = new TypeRef<List<List<String>>>() {};
         var result = daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
 
         return result.stream()
@@ -182,19 +175,33 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public long count(String keyspace) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'count'");
+        var sql = createSql(COUNT_BY_KEYSPACE_PATTERN, keyspace);
+        var meta = Map.of("sql", sql);
+        var typeRef = new TypeRef<List<List<Long>>>() {};
+        var result = daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
+
+        return result.stream()
+                .flatMap(Collection::stream)
+                .toList()
+                .get(0);
     }
 
     @Override
     public long count(KeyValueQuery<?> query, String keyspace) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'count'");
+        var sql = createSql(COUNT_BY_FILTER_PATTERN, keyspace, query);
+        var meta = Map.of("sql", sql);
+        var typeRef = new TypeRef<List<List<Long>>>() {};
+        var result = daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
+
+        return result.stream()
+                .flatMap(Collection::stream)
+                .toList()
+                .get(0);
     }
 
-    private String findStateStoreTypeAndVersion(String statestoreName, List<ComponentMetadata> components) {
+    private String findStateStoreTypeAndVersion(List<ComponentMetadata> components) {
         for (ComponentMetadata cm : components) {
-            if (cm.getName().equals(statestoreName)) {
+            if (cm.getName().equals(stateStoreName)) {
                 return cm.getType() + "-" + cm.getVersion();
             }
         }
@@ -203,6 +210,21 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     private String resolveKey(String keyspace, Object id) {
         return String.format("%s-%s", keyspace, id);
+    }
+
+    private String createSql(String sqlPattern, String keyspace) {
+        var keyspaceFilter = getKeyspaceFilter(keyspace);
+
+        return String.format(sqlPattern, keyspaceFilter);
+    }
+
+    private String createSql(String sqlPattern, String keyspace, KeyValueQuery<?> query) {
+        var expression = PARSER.parseRaw(query.getCriteria().toString());
+        var left = expression.getAST().getChild(0);
+        var right = expression.getAST().getChild(1);
+        var keyspaceFilter = getKeyspaceFilter(keyspace);
+
+        return String.format(sqlPattern, keyspaceFilter, left, right);
     }
 
     private String getKeyspaceFilter(String keyspace) {
