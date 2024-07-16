@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.dapr.client.DaprClient;
 import io.dapr.utils.TypeRef;
+import org.springframework.util.Assert;
 
 public class DaprKeyValueAdapter implements KeyValueAdapter {
     private static final Map<String, String> CONTENT_TYPE_META = Map.of("contentType", "application/json");
@@ -31,6 +32,8 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
     private static final String SELECT_BY_FILTER_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s' and value->>%s=%s";
     private static final String COUNT_BY_KEYSPACE_PATTERN = "select count(*) as value from state where key LIKE '%s'";
     private static final String COUNT_BY_FILTER_PATTERN = "select count(*) as value from state where key LIKE '%s' and value->>%s=%s";
+    private static final TypeRef<List<List<String>>> FILTER_TYPE_REF = new TypeRef<>() {};
+    private static final TypeRef<List<List<Long>>> COUNT_TYPE_REF = new TypeRef<>() {};
 
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
@@ -40,6 +43,11 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
     private final String stateStoreBinding;
 
     public DaprKeyValueAdapter(DaprClient daprClient, ObjectMapper mapper, String stateStoreName, String stateStoreBinding) {
+        Assert.notNull(daprClient, "DaprClient must not be null");
+        Assert.notNull(mapper, "ObjectMapper must not be null");
+        Assert.hasText(stateStoreName, "State store name must not be empty");
+        Assert.hasText(stateStoreBinding, "State store binding must not be empty");
+
         this.daprClient = daprClient;
         this.mapper = mapper;
         this.stateStoreName = stateStoreName;
@@ -53,6 +61,10 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public Object put(Object id, Object item, String keyspace) {
+        Assert.notNull(id, "Id must not be null");
+        Assert.notNull(item, "Item must not be null");
+        Assert.hasText(keyspace, "Keyspace must not be empty");
+
         String key = resolveKey(keyspace, id);
         State<Object> state = new State<>(key, item, null, CONTENT_TYPE_META, null);
         SaveStateRequest request = new SaveStateRequest(stateStoreName).setStates(state);
@@ -69,6 +81,9 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public Object get(Object id, String keyspace) {
+        Assert.notNull(id, "Id must not be null");
+        Assert.hasText(keyspace, "Keyspace must not be empty");
+
         String key = resolveKey(keyspace, id);
 
         return daprClient.getState(stateStoreName, key, Object.class).block().getValue();
@@ -76,6 +91,10 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public <T> T get(Object id, String keyspace, Class<T> type) {
+        Assert.notNull(id, "Id must not be null");
+        Assert.hasText(keyspace, "Keyspace must not be empty");
+        Assert.notNull(type, "Type must not be null");
+
         String key = resolveKey(keyspace, id);
         GetStateRequest stateRequest = new GetStateRequest(stateStoreName, key).setMetadata(CONTENT_TYPE_META);
 
@@ -119,9 +138,11 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public <T> Iterable<T> getAllOf(String keyspace, Class<T> type) {
+        Assert.hasText(keyspace, "Keyspace must not be empty");
+        Assert.notNull(type, "Type must not be null");
+
         String sql = createSql(SELECT_BY_KEYSPACE_PATTERN, keyspace);
-        TypeRef<List<List<String>>> typeRef = new TypeRef<>() {};
-        List<List<String>> result = queryUsingBinding(sql, typeRef);
+        List<List<String>> result = queryUsingBinding(sql, FILTER_TYPE_REF);
 
         return result.stream()
                 .flatMap(Collection::stream)
@@ -136,6 +157,8 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public void deleteAllOf(String keyspace) {
+        Assert.hasText(keyspace, "Keyspace must not be empty");
+
         String sql = createSql(DELETE_BY_KEYSPACE_PATTERN, keyspace);
 
         execUsingBinding(sql);
@@ -148,6 +171,10 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public <T> Iterable<T> find(KeyValueQuery<?> query, String keyspace, Class<T> type) {
+        Assert.notNull(query, "Query must not be null");
+        Assert.hasText(keyspace, "Keyspace must not be empty");
+        Assert.notNull(type, "Type must not be null");
+
         DaprMetadata metadata = daprClient.getMetadata().block();
         List<ComponentMetadata> components = metadata.getComponents();
         String stateStoreTypeAndVersion = findStateStoreTypeAndVersion(components);
@@ -161,8 +188,7 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         }
 
         String sql = createSql(SELECT_BY_FILTER_PATTERN, keyspace, query);
-        TypeRef<List<List<String>>> typeRef = new TypeRef<>() {};
-        List<List<String>> result = queryUsingBinding(sql, typeRef);
+        List<List<String>> result = queryUsingBinding(sql, FILTER_TYPE_REF);
 
         return result.stream()
                 .flatMap(Collection::stream)
@@ -172,9 +198,10 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public long count(String keyspace) {
+        Assert.hasText(keyspace, "Keyspace must not be empty");
+
         String sql = createSql(COUNT_BY_KEYSPACE_PATTERN, keyspace);
-        TypeRef<List<List<Long>>> typeRef = new TypeRef<>() {};
-        List<List<Long>> result = queryUsingBinding(sql, typeRef);
+        List<List<Long>> result = queryUsingBinding(sql, COUNT_TYPE_REF);
 
         return result.stream()
                 .flatMap(Collection::stream)
@@ -184,9 +211,11 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
 
     @Override
     public long count(KeyValueQuery<?> query, String keyspace) {
+        Assert.notNull(query, "Query must not be null");
+        Assert.hasText(keyspace, "Keyspace must not be empty");
+
         String sql = createSql(COUNT_BY_FILTER_PATTERN, keyspace, query);
-        TypeRef<List<List<Long>>> typeRef = new TypeRef<>() {};
-        List<List<Long>> result = queryUsingBinding(sql, typeRef);
+        List<List<Long>> result = queryUsingBinding(sql, COUNT_TYPE_REF);
 
         return result.stream()
                 .flatMap(Collection::stream)

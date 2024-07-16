@@ -1,6 +1,5 @@
 package io.diagrid.spring.core.messaging;
 
-import io.diagrid.spring.core.keyvalue.DaprKeyValueOperations;
 import org.springframework.lang.Nullable;
 import reactor.core.publisher.Mono;
 
