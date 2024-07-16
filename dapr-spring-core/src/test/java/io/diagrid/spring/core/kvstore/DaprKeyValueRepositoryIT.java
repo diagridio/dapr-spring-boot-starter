@@ -51,7 +51,6 @@ public class DaprKeyValueRepositoryIT extends BaseIntegrationTest {
         public DaprClientBuilder daprClientBuilder() {
             return new DaprClientBuilder();
         }
-
     
     }
 
@@ -75,9 +74,9 @@ public class DaprKeyValueRepositoryIT extends BaseIntegrationTest {
         boolean existsById2 = repo.existsById(4);
         assertTrue(!existsById2);
 
+        Iterable<TestType> all = repo.findAll();
 
-
-        //Iterable<TestType> all = repo.findAll();
+        assertEquals(1, all.spliterator().getExactSizeIfKnown());
         
     }
 
