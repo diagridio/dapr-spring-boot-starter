@@ -1,6 +1,8 @@
 package io.diagrid.spring.boot.autoconfigure.statestore;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.diagrid.spring.core.keyvalue.PostgreSQLQueryTranslator;
+import io.diagrid.spring.core.keyvalue.QueryTranslator;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -23,10 +25,11 @@ public class DaprStateStoreAutoConfiguration {
     @ConditionalOnMissingBean
     public DaprKeyValueAdapter keyValueAdapter(DaprClientBuilder daprClientBuilder, ObjectMapper mapper, DaprStateStoreProperties daprStateStoreProperties) {
         DaprClient daprClient = daprClientBuilder.build();
+        QueryTranslator queryTranslator = new PostgreSQLQueryTranslator(daprStateStoreProperties.getName());
         String stateStoreName = daprStateStoreProperties.getName();
         String stateStoreBinding = daprStateStoreProperties.getBinding();
 
-        return new DaprKeyValueAdapter(daprClient, mapper, stateStoreName, stateStoreBinding);
+        return new DaprKeyValueAdapter(daprClient, queryTranslator, mapper, stateStoreName, stateStoreBinding);
     }
 
     @Bean
