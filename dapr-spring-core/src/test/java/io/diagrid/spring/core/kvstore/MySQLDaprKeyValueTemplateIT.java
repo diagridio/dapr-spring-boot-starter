@@ -14,7 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.keyvalue.core.query.KeyValueQuery;
-import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
 import java.util.ArrayList;
@@ -27,9 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Integration tests for {@link MariadDBDaprKeyValueTemplateIT}.
+ * Integration tests for {@link MySQLDaprKeyValueTemplateIT}.
  */
-public class MariadDBDaprKeyValueTemplateIT extends BaseIntegrationTest {
+public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
     private static final String CONNECTION_STRING = "mysql:password@tcp(mysql:3306)/dapr_db";
     private static final String STATE_STORE_NAME = "kvstore";
     private static final String BINDING_NAME = "kvbinding";
@@ -43,8 +43,7 @@ public class MariadDBDaprKeyValueTemplateIT extends BaseIntegrationTest {
             "connectionString", CONNECTION_STRING
     );
 
-    @Container
-    private static final MariaDBContainer<?> MARIA_DB_CONTAINER = new MariaDBContainer<>("mariadb:10.5.5")
+    private static final MySQLContainer<?> MY_SQL_CONTAINER = new MySQLContainer<>("mysql:latest")
             .withNetworkAliases("mysql")
             .withDatabaseName("dapr_db")
             .withUsername("mysql")
@@ -56,15 +55,13 @@ public class MariadDBDaprKeyValueTemplateIT extends BaseIntegrationTest {
     private static final DaprContainer DAPR_CONTAINER = new DaprContainer("daprio/daprd:1.13.2")
             .withAppName("local-dapr-app")
             .withNetwork(DAPR_NETWORK)
-            .withComponent(new DaprContainer.Component("kvstore", "state.mysql",
-                    Map.of("connectionString", "mysql:password@tcp(mysql:3306)/dapr_db")))
-            .withComponent(new DaprContainer.Component("kvbinding", "bindings.mysql",
-                    Map.of("connectionString", "mysql:password@tcp(mysql:3306)/dapr_db")))
+            .withComponent(new DaprContainer.Component("kvstore", "state.mysql", STATE_STORE_PROPERTIES))
+            .withComponent(new DaprContainer.Component("kvbinding", "bindings.mysql", BINDING_PROPERTIES))
             .withComponent(new DaprContainer.Component("pubsub", "pubsub.in-memory", Collections.emptyMap()))
             .withAppPort(8080)
             .withDaprLogLevel(DaprContainer.DaprLogLevel.debug)
             .withAppChannelAddress("host.testcontainers.internal")
-            .dependsOn(MARIA_DB_CONTAINER);
+            .dependsOn(MY_SQL_CONTAINER);
 
     private final DaprClient daprClient = new DaprClientBuilder().build();
     private final QueryTranslator queryTranslator = new PostgreSQLQueryTranslator(STATE_STORE_NAME);
@@ -80,8 +77,6 @@ public class MariadDBDaprKeyValueTemplateIT extends BaseIntegrationTest {
 
     @BeforeAll
     static void beforeAll() {
-        System.out.println(MARIA_DB_CONTAINER.getJdbcUrl().split(":")[3].split("/")[0]);
-
         org.testcontainers.Testcontainers.exposeHostPorts(8080);
         System.setProperty("dapr.grpc.port", Integer.toString(DAPR_CONTAINER.getGRPCPort()));
         System.setProperty("dapr.http.port", Integer.toString(DAPR_CONTAINER.getHTTPPort()));

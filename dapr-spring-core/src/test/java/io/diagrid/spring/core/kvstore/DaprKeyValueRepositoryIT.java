@@ -1,9 +1,12 @@
 package io.diagrid.spring.core.kvstore;
 
+import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
 import io.diagrid.BaseIntegrationTest;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapter;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueTemplate;
+import io.diagrid.spring.core.keyvalue.PostgreSQLQueryTranslator;
+import io.diagrid.spring.core.keyvalue.QueryTranslator;
 import io.diagrid.spring.core.keyvalue.repository.EnableDaprRepositories;
 
 import static org.junit.Assert.assertEquals;
@@ -38,8 +41,11 @@ public class DaprKeyValueRepositoryIT extends BaseIntegrationTest {
         }
 
         @Bean
-        public KeyValueAdapter daprKeyValueAdapter(DaprClientBuilder daprClientBuilder, ObjectMapper mapper) {
-            return new DaprKeyValueAdapter(daprClientBuilder.build(), mapper, "kvstore", "kvbinding");
+        public DaprKeyValueAdapter daprKeyValueAdapter(DaprClientBuilder daprClientBuilder, ObjectMapper mapper) {
+            DaprClient daprClient = daprClientBuilder.build();
+            QueryTranslator queryTranslator = new PostgreSQLQueryTranslator("kvstore");
+
+            return new DaprKeyValueAdapter(daprClient, queryTranslator, mapper, "kvstore", "kvbinding");
         }
 
         @Bean
