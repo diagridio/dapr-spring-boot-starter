@@ -28,11 +28,11 @@ import org.springframework.util.Assert;
 public class DaprKeyValueAdapter implements KeyValueAdapter {
     private static final Map<String, String> CONTENT_TYPE_META = Map.of("contentType", "application/json");
     private static final String DELETE_BY_KEYSPACE_PATTERN = "delete from state where key LIKE '%s'";
-    private static final String SELECT_BY_KEYSPACE_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s'";
-    private static final String SELECT_BY_FILTER_PATTERN = "select regexp_replace(value#>>'{}', '\"', '\"', 'g') as value from state where key LIKE '%s' and value->>%s=%s";
+    private static final String SELECT_BY_KEYSPACE_PATTERN = "select value from state where key LIKE '%s'";
+    private static final String SELECT_BY_FILTER_PATTERN = "select value from state where key LIKE '%s' and value->>%s=%s";
     private static final String COUNT_BY_KEYSPACE_PATTERN = "select count(*) as value from state where key LIKE '%s'";
     private static final String COUNT_BY_FILTER_PATTERN = "select count(*) as value from state where key LIKE '%s' and value->>%s=%s";
-    private static final TypeRef<List<List<String>>> FILTER_TYPE_REF = new TypeRef<>() {};
+    private static final TypeRef<List<List<Object>>> FILTER_TYPE_REF = new TypeRef<>() {};
     private static final TypeRef<List<List<Long>>> COUNT_TYPE_REF = new TypeRef<>() {};
 
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
@@ -142,11 +142,11 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         Assert.notNull(type, "Type must not be null");
 
         String sql = createSql(SELECT_BY_KEYSPACE_PATTERN, keyspace);
-        List<List<String>> result = queryUsingBinding(sql, FILTER_TYPE_REF);
+        List<List<Object>> result = queryUsingBinding(sql, FILTER_TYPE_REF);
 
         return result.stream()
                 .flatMap(Collection::stream)
-                .map(string -> deserialize(string, type))
+                .map(value -> convertValue(value, type))
                 .toList();
     }
 
@@ -188,11 +188,11 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         }
 
         String sql = createSql(SELECT_BY_FILTER_PATTERN, keyspace, query);
-        List<List<String>> result = queryUsingBinding(sql, FILTER_TYPE_REF);
+        List<List<Object>> result = queryUsingBinding(sql, FILTER_TYPE_REF);
 
         return result.stream()
                 .flatMap(Collection::stream)
-                .map(string -> deserialize(string, type))
+                .map(value -> convertValue(value, type))
                 .toList();
     }
 
@@ -267,9 +267,9 @@ public class DaprKeyValueAdapter implements KeyValueAdapter {
         return daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
     }
 
-    private <T> T deserialize(String string, Class<T> type) {
+    private <T> T convertValue(Object value, Class<T> type) {
         try {
-            return mapper.readValue(string, type);
+            return mapper.convertValue(value, type);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

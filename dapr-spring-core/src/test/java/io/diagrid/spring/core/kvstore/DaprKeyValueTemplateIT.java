@@ -3,6 +3,7 @@ package io.diagrid.spring.core.kvstore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
+import io.dapr.utils.TypeRef;
 import io.diagrid.BaseIntegrationTest;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapter;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueTemplate;
@@ -152,6 +153,21 @@ public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
         long result = keyValueTemplate.count(keyValueQuery, TestType.class);
 
         assertThat(result).isEqualTo(1);
+    }
+
+    @Test
+    public void testRawQuery() {
+        int itemId = 1;
+        TestType insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
+        assertThat(insertedType).isNotNull();
+
+        String query = "SELECT value FROM state";
+        Map<String, String> meta = Map.of("sql", query);
+        TypeRef<List<List<Object>>> typeRef = new TypeRef<>() {};
+
+        var result = daprClient.invokeBinding("kvbinding", "query", null, meta, typeRef).block();
+
+        System.out.println(result);
     }
 
 }
