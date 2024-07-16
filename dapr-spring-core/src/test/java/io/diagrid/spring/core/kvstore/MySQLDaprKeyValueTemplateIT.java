@@ -13,8 +13,11 @@ import io.diagrid.spring.core.keyvalue.QueryTranslator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.keyvalue.core.query.KeyValueQuery;
 import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 
 import java.util.ArrayList;
@@ -30,21 +33,25 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Integration tests for {@link MySQLDaprKeyValueTemplateIT}.
  */
 public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
-    private static final String CONNECTION_STRING = "mysql:password@tcp(mysql:3306)/dapr_db";
+    private static final Logger LOGGER = LoggerFactory.getLogger(MySQLDaprKeyValueTemplateIT.class);
+
+    private static final String STATE_STORE_DSN = "mysql:password@tcp(mysql:3306)/";
+    private static final String BINDING_DSN = "mysql:password@tcp(mysql:3306)/dapr_db";
     private static final String STATE_STORE_NAME = "kvstore";
     private static final String BINDING_NAME = "kvbinding";
     private static final Map<String, Object> STATE_STORE_PROPERTIES = Map.of(
             "keyPrefix", "name",
+            "schemaName", "dapr_db",
             "actorStateStore", new QuotedBoolean("true"),
-            "connectionString", CONNECTION_STRING
+            "connectionString", STATE_STORE_DSN
     );
 
     private static final Map<String, Object> BINDING_PROPERTIES = Map.of(
-            "connectionString", CONNECTION_STRING
+            "url", BINDING_DSN
     );
 
     @Container
-    private static final MySQLContainer<?> MY_SQL_CONTAINER = new MySQLContainer<>("mysql:latest")
+    private static final MySQLContainer<?> MY_SQL_CONTAINER = new MySQLContainer<>("mysql:5.7.34")
             .withNetworkAliases("mysql")
             .withDatabaseName("dapr_db")
             .withUsername("mysql")
@@ -62,6 +69,7 @@ public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
             .withAppPort(8080)
             .withDaprLogLevel(DaprContainer.DaprLogLevel.debug)
             .withAppChannelAddress("host.testcontainers.internal")
+            .withLogConsumer(new Slf4jLogConsumer(LOGGER))
             .dependsOn(MY_SQL_CONTAINER);
 
     private final DaprClient daprClient = new DaprClientBuilder().build();
