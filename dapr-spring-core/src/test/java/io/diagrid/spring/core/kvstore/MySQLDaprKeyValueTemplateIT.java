@@ -43,6 +43,7 @@ public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
             "connectionString", CONNECTION_STRING
     );
 
+    @Container
     private static final MySQLContainer<?> MY_SQL_CONTAINER = new MySQLContainer<>("mysql:latest")
             .withNetworkAliases("mysql")
             .withDatabaseName("dapr_db")
