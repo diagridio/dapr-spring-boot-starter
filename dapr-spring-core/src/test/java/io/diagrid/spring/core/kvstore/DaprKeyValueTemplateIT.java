@@ -3,7 +3,6 @@ package io.diagrid.spring.core.kvstore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
-import io.dapr.utils.TypeRef;
 import io.diagrid.BaseIntegrationTest;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapter;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueTemplate;
