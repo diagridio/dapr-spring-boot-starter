@@ -4,33 +4,88 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
 import io.diagrid.BaseIntegrationTest;
+import io.diagrid.dapr.DaprContainer;
+import io.diagrid.dapr.QuotedBoolean;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapter;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueTemplate;
+import io.diagrid.spring.core.keyvalue.PostgreSQLQueryTranslator;
+import io.diagrid.spring.core.keyvalue.QueryTranslator;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.keyvalue.core.query.KeyValueQuery;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.junit.jupiter.Container;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
- * Integration tests for {@link DaprKeyValueTemplateIT}.
+ * Integration tests for {@link MariadDBDaprKeyValueTemplateIT}.
  */
-public class DaprKeyValueTemplateIT extends BaseIntegrationTest {
+public class MariadDBDaprKeyValueTemplateIT extends BaseIntegrationTest {
+    private static final String CONNECTION_STRING = "mysql:password@tcp(mysql:3306)/dapr_db";
+    private static final String STATE_STORE_NAME = "kvstore";
+    private static final String BINDING_NAME = "kvbinding";
+    private static final Map<String, Object> STATE_STORE_PROPERTIES = Map.of(
+            "keyPrefix", "name",
+            "actorStateStore", new QuotedBoolean("true"),
+            "connectionString", CONNECTION_STRING
+    );
+
+    private static final Map<String, Object> BINDING_PROPERTIES = Map.of(
+            "connectionString", CONNECTION_STRING
+    );
+
+    @Container
+    private static final MariaDBContainer<?> MARIA_DB_CONTAINER = new MariaDBContainer<>("mariadb:10.5.5")
+            .withNetworkAliases("mysql")
+            .withDatabaseName("dapr_db")
+            .withUsername("mysql")
+            .withPassword("password")
+            .withExposedPorts(3306)
+            .withNetwork(DAPR_NETWORK);
+
+    @Container
+    private static final DaprContainer DAPR_CONTAINER = new DaprContainer("daprio/daprd:1.13.2")
+            .withAppName("local-dapr-app")
+            .withNetwork(DAPR_NETWORK)
+            .withComponent(new DaprContainer.Component("kvstore", "state.mysql",
+                    Map.of("connectionString", "mysql:password@tcp(mysql:3306)/dapr_db")))
+            .withComponent(new DaprContainer.Component("kvbinding", "bindings.mysql",
+                    Map.of("connectionString", "mysql:password@tcp(mysql:3306)/dapr_db")))
+            .withComponent(new DaprContainer.Component("pubsub", "pubsub.in-memory", Collections.emptyMap()))
+            .withAppPort(8080)
+            .withDaprLogLevel(DaprContainer.DaprLogLevel.debug)
+            .withAppChannelAddress("host.testcontainers.internal")
+            .dependsOn(MARIA_DB_CONTAINER);
+
     private final DaprClient daprClient = new DaprClientBuilder().build();
+    private final QueryTranslator queryTranslator = new PostgreSQLQueryTranslator(STATE_STORE_NAME);
     private final ObjectMapper mapper = new ObjectMapper();
     private final DaprKeyValueAdapter daprKeyValueAdapter = new DaprKeyValueAdapter(
             daprClient,
+            queryTranslator,
             mapper,
-            "kvstore",
-            "kvbinding"
+            STATE_STORE_NAME,
+            BINDING_NAME
     );
     private final DaprKeyValueTemplate keyValueTemplate = new DaprKeyValueTemplate(daprKeyValueAdapter);
+
+    @BeforeAll
+    static void beforeAll() {
+        System.out.println(MARIA_DB_CONTAINER.getJdbcUrl().split(":")[3].split("/")[0]);
+
+        org.testcontainers.Testcontainers.exposeHostPorts(8080);
+        System.setProperty("dapr.grpc.port", Integer.toString(DAPR_CONTAINER.getGRPCPort()));
+        System.setProperty("dapr.http.port", Integer.toString(DAPR_CONTAINER.getHTTPPort()));
+    }
 
     @AfterEach
     public void tearDown() {
