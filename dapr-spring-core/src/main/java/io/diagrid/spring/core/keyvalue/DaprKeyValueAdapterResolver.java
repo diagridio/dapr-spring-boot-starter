@@ -30,7 +30,7 @@ public class DaprKeyValueAdapterResolver implements KeyValueAdapterResolver {
         List<ComponentMetadata> components = metadata.getComponents();
 
         if (components == null || components.isEmpty()) {
-            throw new IllegalArgumentException("No components found in Dapr metadata");
+            throw new IllegalStateException("No components found in Dapr metadata");
         }
 
         if (shouldUseMySQL(components, stateStoreName, bindingName)) {
@@ -41,7 +41,7 @@ public class DaprKeyValueAdapterResolver implements KeyValueAdapterResolver {
             return new PostgreSQLDaprKeyValueAdapter(daprClient, mapper, stateStoreName, bindingName);
         }
 
-        throw new IllegalArgumentException("Could find any adapter matching the given state store and binding");
+        throw new IllegalStateException("Could find any adapter matching the given state store and binding");
     }
 
     private boolean shouldUseMySQL(List<ComponentMetadata> components, String stateStoreName, String bindingName) {
