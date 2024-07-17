@@ -5,13 +5,8 @@ import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dapr.client.DaprClient;
-import io.dapr.client.domain.GetStateRequest;
-import io.dapr.client.domain.SaveStateRequest;
-import io.dapr.client.domain.State;
 import io.dapr.utils.TypeRef;
-import org.springframework.data.keyvalue.core.KeyValueAdapter;
 import org.springframework.data.keyvalue.core.query.KeyValueQuery;
-import org.springframework.data.util.CloseableIterator;
 import org.springframework.expression.spel.SpelNode;
 import org.springframework.expression.spel.standard.SpelExpression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -21,15 +16,14 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
-public class MySQLDaprKeyValueAdapter implements KeyValueAdapter {
+public class MySQLDaprKeyValueAdapter extends AbstractDaprKeyValueAdapter {
     private static final String DELETE_BY_KEYSPACE_PATTERN = "delete from state where id LIKE '%s'";
     private static final String SELECT_BY_KEYSPACE_PATTERN = "select value from state where id LIKE '%s'";
     private static final String SELECT_BY_FILTER_PATTERN = "select value from state where id LIKE '%s' and JSON_EXTRACT(value, %s) = %s";
     private static final String COUNT_BY_KEYSPACE_PATTERN = "select count(*) as value from state where id LIKE '%s'";
     private static final String COUNT_BY_FILTER_PATTERN = "select count(*) as value from state where id LIKE '%s' and JSON_EXTRACT(value, %s) = %s";
-    private static final Map<String, String> CONTENT_TYPE_META = Map.of("contentType", "application/json");
+
     private static final TypeRef<List<JsonNode>> FILTER_TYPE_REF = new TypeRef<>() {};
     private static final TypeRef<List<JsonNode>> COUNT_TYPE_REF = new TypeRef<>() {};
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
@@ -41,9 +35,9 @@ public class MySQLDaprKeyValueAdapter implements KeyValueAdapter {
     private final String stateStoreBinding;
 
     public MySQLDaprKeyValueAdapter(DaprClient daprClient, ObjectMapper mapper, String stateStoreName, String stateStoreBinding) {
-        Assert.notNull(daprClient, "DaprClient must not be null");
+        super(daprClient, stateStoreName);
+
         Assert.notNull(mapper, "ObjectMapper must not be null");
-        Assert.hasText(stateStoreName, "State store name must not be empty");
         Assert.hasText(stateStoreBinding, "State store binding must not be empty");
 
         this.daprClient = daprClient;
@@ -52,87 +46,6 @@ public class MySQLDaprKeyValueAdapter implements KeyValueAdapter {
         this.stateStoreBinding = stateStoreBinding;
     }
 
-    @Override
-    public void destroy() throws Exception {
-        daprClient.close();
-    }
-
-    @Override
-    public Object put(Object id, Object item, String keyspace) {
-        Assert.notNull(id, "Id must not be null");
-        Assert.notNull(item, "Item must not be null");
-        Assert.hasText(keyspace, "Keyspace must not be empty");
-
-        String key = resolveKey(keyspace, id);
-        State<Object> state = new State<>(key, item, null, CONTENT_TYPE_META, null);
-        SaveStateRequest request = new SaveStateRequest(stateStoreName).setStates(state);
-
-        daprClient.saveBulkState(request).block();
-
-        return item;
-    }
-
-    @Override
-    public boolean contains(Object id, String keyspace) {
-        return get(id, keyspace) != null;
-    }
-
-    @Override
-    public Object get(Object id, String keyspace) {
-        Assert.notNull(id, "Id must not be null");
-        Assert.hasText(keyspace, "Keyspace must not be empty");
-
-        String key = resolveKey(keyspace, id);
-
-        return daprClient.getState(stateStoreName, key, Object.class).block().getValue();
-    }
-
-    @Override
-    public <T> T get(Object id, String keyspace, Class<T> type) {
-        Assert.notNull(id, "Id must not be null");
-        Assert.hasText(keyspace, "Keyspace must not be empty");
-        Assert.notNull(type, "Type must not be null");
-
-        String key = resolveKey(keyspace, id);
-        GetStateRequest stateRequest = new GetStateRequest(stateStoreName, key).setMetadata(CONTENT_TYPE_META);
-
-        return daprClient.getState(stateRequest, TypeRef.get(type)).block().getValue();
-    }
-
-    @Override
-    public Object delete(Object id, String keyspace) {
-        Object result = get(id, keyspace);
-
-        if (result == null) {
-            return null;
-        }
-
-        String key = resolveKey(keyspace, id);
-
-        daprClient.deleteState(stateStoreName, key).block();
-
-        return result;
-    }
-
-    @Override
-    public <T> T delete(Object id, String keyspace, Class<T> type) {
-        T result = get(id, keyspace, type);
-
-        if (result == null) {
-            return null;
-        }
-
-        String key = resolveKey(keyspace, id);
-
-        daprClient.deleteState(stateStoreName, key).block();
-
-        return result;
-    }
-
-    @Override
-    public Iterable<?> getAllOf(String keyspace) {
-        return getAllOf(keyspace, Object.class);
-    }
 
     @Override
     public <T> Iterable<T> getAllOf(String keyspace, Class<T> type) {
@@ -140,14 +53,9 @@ public class MySQLDaprKeyValueAdapter implements KeyValueAdapter {
         Assert.notNull(type, "Type must not be null");
 
         String sql = createSql(SELECT_BY_KEYSPACE_PATTERN, keyspace);
-        List<JsonNode> results = queryUsingBinding(sql, FILTER_TYPE_REF);
+        List<JsonNode> result = queryUsingBinding(sql, FILTER_TYPE_REF);
 
-        return convertValues(results, type);
-    }
-
-    @Override
-    public CloseableIterator<Entry<Object, Object>> entries(String keyspace) {
-        throw new UnsupportedOperationException("'entries' method is not supported");
+        return convertValues(result, type);
     }
 
     @Override
@@ -160,20 +68,15 @@ public class MySQLDaprKeyValueAdapter implements KeyValueAdapter {
     }
 
     @Override
-    public void clear() {
-        throw new UnsupportedOperationException("'clear' method is not supported");
-    }
-
-    @Override
     public <T> Iterable<T> find(KeyValueQuery<?> query, String keyspace, Class<T> type) {
         Assert.notNull(query, "Query must not be null");
         Assert.hasText(keyspace, "Keyspace must not be empty");
         Assert.notNull(type, "Type must not be null");
 
         String sql = createSql(SELECT_BY_FILTER_PATTERN, keyspace, query);
-        List<JsonNode> results = queryUsingBinding(sql, FILTER_TYPE_REF);
+        List<JsonNode> result = queryUsingBinding(sql, FILTER_TYPE_REF);
 
-        return convertValues(results, type);
+        return convertValues(result, type);
     }
 
     @Override
@@ -181,9 +84,9 @@ public class MySQLDaprKeyValueAdapter implements KeyValueAdapter {
         Assert.hasText(keyspace, "Keyspace must not be empty");
 
         String sql = createSql(COUNT_BY_KEYSPACE_PATTERN, keyspace);
-        List<JsonNode> results = queryUsingBinding(sql, COUNT_TYPE_REF);
+        List<JsonNode> result = queryUsingBinding(sql, COUNT_TYPE_REF);
 
-        return extractCount(results);
+        return extractCount(result);
     }
 
     @Override
@@ -192,9 +95,9 @@ public class MySQLDaprKeyValueAdapter implements KeyValueAdapter {
         Assert.hasText(keyspace, "Keyspace must not be empty");
 
         String sql = createSql(COUNT_BY_FILTER_PATTERN, keyspace, query);
-        List<JsonNode> results = queryUsingBinding(sql, COUNT_TYPE_REF);
+        List<JsonNode> result = queryUsingBinding(sql, COUNT_TYPE_REF);
 
-        return extractCount(results);
+        return extractCount(result);
     }
 
     private String getKeyspaceFilter(String keyspace) {
@@ -218,10 +121,6 @@ public class MySQLDaprKeyValueAdapter implements KeyValueAdapter {
         return String.format(sqlPattern, keyspaceFilter, left, right);
     }
 
-    private String resolveKey(String keyspace, Object id) {
-        return String.format("%s-%s", keyspace, id);
-    }
-
     private void execUsingBinding(String sql) {
         Map<String, String> meta = Map.of("sql", sql);
 
@@ -234,18 +133,18 @@ public class MySQLDaprKeyValueAdapter implements KeyValueAdapter {
         return daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
     }
 
-    private <T> List<T> convertValues(List<JsonNode> results, Class<T> type) {
-        if (results == null || results.isEmpty()) {
+    private <T> List<T> convertValues(List<JsonNode> values, Class<T> type) {
+        if (values == null || values.isEmpty()) {
             return Collections.emptyList();
         }
 
-        return results.stream()
+        return values.stream()
                 .map(value -> convertValue(value, type))
                 .toList();
     }
 
-    private <T> T convertValue(JsonNode result, Class<T> type) {
-        JsonNode valueNode = result.at(VALUE_POINTER);
+    private <T> T convertValue(JsonNode value, Class<T> type) {
+        JsonNode valueNode = value.at(VALUE_POINTER);
 
         if (valueNode.isMissingNode()) {
             throw new IllegalStateException("Value is missing");
@@ -263,12 +162,12 @@ public class MySQLDaprKeyValueAdapter implements KeyValueAdapter {
         }
     }
 
-    private long extractCount(List<JsonNode> results) {
-        if (results == null || results.isEmpty()) {
+    private long extractCount(List<JsonNode> values) {
+        if (values == null || values.isEmpty()) {
             return 0;
         }
 
-        JsonNode valueNode = results.get(0).at(VALUE_POINTER);
+        JsonNode valueNode = values.get(0).at(VALUE_POINTER);
 
         if (valueNode.isMissingNode()) {
             throw new IllegalStateException("Count value is missing");

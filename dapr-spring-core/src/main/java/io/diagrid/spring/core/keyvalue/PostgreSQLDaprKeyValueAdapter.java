@@ -1,35 +1,28 @@
 package io.diagrid.spring.core.keyvalue;
 
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import io.dapr.client.domain.GetStateRequest;
-import io.dapr.client.domain.SaveStateRequest;
-import io.dapr.client.domain.State;
-import org.springframework.data.keyvalue.core.KeyValueAdapter;
-import org.springframework.data.keyvalue.core.query.KeyValueQuery;
-import org.springframework.data.util.CloseableIterator;
-
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.dapr.client.DaprClient;
 import io.dapr.utils.TypeRef;
+import org.springframework.data.keyvalue.core.query.KeyValueQuery;
 import org.springframework.expression.spel.SpelNode;
 import org.springframework.expression.spel.standard.SpelExpression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.util.Assert;
 
-public class PostgreSQLDaprKeyValueAdapter implements KeyValueAdapter {
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+public class PostgreSQLDaprKeyValueAdapter extends AbstractDaprKeyValueAdapter {
     private static final String DELETE_BY_KEYSPACE_PATTERN = "delete from state where key LIKE '%s'";
     private static final String SELECT_BY_KEYSPACE_PATTERN = "select value from state where key LIKE '%s'";
     private static final String SELECT_BY_FILTER_PATTERN = "select value from state where key LIKE '%s' and JSONB_EXTRACT_PATH_TEXT(value, %s) = %s";
     private static final String COUNT_BY_KEYSPACE_PATTERN = "select count(*) as value from state where key LIKE '%s'";
     private static final String COUNT_BY_FILTER_PATTERN = "select count(*) as value from state where key LIKE '%s' and JSONB_EXTRACT_PATH_TEXT(value, %s) = %s";
 
-    private static final Map<String, String> CONTENT_TYPE_META = Map.of("contentType", "application/json");
     private static final TypeRef<List<List<Object>>> FILTER_TYPE_REF = new TypeRef<>() {};
     private static final TypeRef<List<List<Long>>> COUNT_TYPE_REF = new TypeRef<>() {};
     private static final SpelExpressionParser PARSER = new SpelExpressionParser();
@@ -40,97 +33,15 @@ public class PostgreSQLDaprKeyValueAdapter implements KeyValueAdapter {
     private final String stateStoreBinding;
 
     public PostgreSQLDaprKeyValueAdapter(DaprClient daprClient, ObjectMapper mapper, String stateStoreName, String stateStoreBinding) {
-        Assert.notNull(daprClient, "DaprClient must not be null");
+        super(daprClient, stateStoreName);
+
         Assert.notNull(mapper, "ObjectMapper must not be null");
-        Assert.hasText(stateStoreName, "State store name must not be empty");
         Assert.hasText(stateStoreBinding, "State store binding must not be empty");
 
         this.daprClient = daprClient;
         this.mapper = mapper;
         this.stateStoreName = stateStoreName;
         this.stateStoreBinding = stateStoreBinding;
-    }
-
-    @Override
-    public void destroy() throws Exception {
-        daprClient.close();
-    }
-
-    @Override
-    public Object put(Object id, Object item, String keyspace) {
-        Assert.notNull(id, "Id must not be null");
-        Assert.notNull(item, "Item must not be null");
-        Assert.hasText(keyspace, "Keyspace must not be empty");
-
-        String key = resolveKey(keyspace, id);
-        State<Object> state = new State<>(key, item, null, CONTENT_TYPE_META, null);
-        SaveStateRequest request = new SaveStateRequest(stateStoreName).setStates(state);
-
-        daprClient.saveBulkState(request).block();
-
-        return item;
-    }
-
-    @Override
-    public boolean contains(Object id, String keyspace) {
-        return get(id, keyspace) != null;
-    }
-
-    @Override
-    public Object get(Object id, String keyspace) {
-        Assert.notNull(id, "Id must not be null");
-        Assert.hasText(keyspace, "Keyspace must not be empty");
-
-        String key = resolveKey(keyspace, id);
-
-        return daprClient.getState(stateStoreName, key, Object.class).block().getValue();
-    }
-
-    @Override
-    public <T> T get(Object id, String keyspace, Class<T> type) {
-        Assert.notNull(id, "Id must not be null");
-        Assert.hasText(keyspace, "Keyspace must not be empty");
-        Assert.notNull(type, "Type must not be null");
-
-        String key = resolveKey(keyspace, id);
-        GetStateRequest stateRequest = new GetStateRequest(stateStoreName, key).setMetadata(CONTENT_TYPE_META);
-
-        return daprClient.getState(stateRequest, TypeRef.get(type)).block().getValue();
-    }
-
-    @Override
-    public Object delete(Object id, String keyspace) {
-        Object result = get(id, keyspace);
-
-        if (result == null) {
-            return null;
-        }
-
-        String key = resolveKey(keyspace, id);
-
-        daprClient.deleteState(stateStoreName, key).block();
-
-        return result;
-    }
-
-    @Override
-    public <T> T delete(Object id, String keyspace, Class<T> type) {
-        T result = get(id, keyspace, type);
-
-        if (result == null) {
-            return null;
-        }
-
-        String key = resolveKey(keyspace, id);
-
-        daprClient.deleteState(stateStoreName, key).block();
-
-        return result;
-    }
-
-    @Override
-    public Iterable<?> getAllOf(String keyspace) {
-        return getAllOf(keyspace, Object.class);
     }
 
     @Override
@@ -141,15 +52,7 @@ public class PostgreSQLDaprKeyValueAdapter implements KeyValueAdapter {
         String sql = createSql(SELECT_BY_KEYSPACE_PATTERN, keyspace);
         List<List<Object>> result = queryUsingBinding(sql, FILTER_TYPE_REF);
 
-        return result.stream()
-                .flatMap(Collection::stream)
-                .map(value -> convertValue(value, type))
-                .toList();
-    }
-
-    @Override
-    public CloseableIterator<Entry<Object, Object>> entries(String keyspace) {
-        throw new UnsupportedOperationException("'entries' method is not supported");
+        return convertValues(result, type);
     }
 
     @Override
@@ -162,11 +65,6 @@ public class PostgreSQLDaprKeyValueAdapter implements KeyValueAdapter {
     }
 
     @Override
-    public void clear() {
-        throw new UnsupportedOperationException("'clear' method is not supported");
-    }
-
-    @Override
     public <T> Iterable<T> find(KeyValueQuery<?> query, String keyspace, Class<T> type) {
         Assert.notNull(query, "Query must not be null");
         Assert.hasText(keyspace, "Keyspace must not be empty");
@@ -175,10 +73,7 @@ public class PostgreSQLDaprKeyValueAdapter implements KeyValueAdapter {
         String sql = createSql(SELECT_BY_FILTER_PATTERN, keyspace, query);
         List<List<Object>> result = queryUsingBinding(sql, FILTER_TYPE_REF);
 
-        return result.stream()
-                .flatMap(Collection::stream)
-                .map(value -> convertValue(value, type))
-                .toList();
+        return convertValues(result, type);
     }
 
     @Override
@@ -188,10 +83,7 @@ public class PostgreSQLDaprKeyValueAdapter implements KeyValueAdapter {
         String sql = createSql(COUNT_BY_KEYSPACE_PATTERN, keyspace);
         List<List<Long>> result = queryUsingBinding(sql, COUNT_TYPE_REF);
 
-        return result.stream()
-                .flatMap(Collection::stream)
-                .toList()
-                .get(0);
+        return extractCount(result);
     }
 
     @Override
@@ -202,10 +94,7 @@ public class PostgreSQLDaprKeyValueAdapter implements KeyValueAdapter {
         String sql = createSql(COUNT_BY_FILTER_PATTERN, keyspace, query);
         List<List<Long>> result = queryUsingBinding(sql, COUNT_TYPE_REF);
 
-        return result.stream()
-                .flatMap(Collection::stream)
-                .toList()
-                .get(0);
+        return extractCount(result);
     }
 
     private String getKeyspaceFilter(String keyspace) {
@@ -229,10 +118,6 @@ public class PostgreSQLDaprKeyValueAdapter implements KeyValueAdapter {
         return String.format(sqlPattern, keyspaceFilter, left, right);
     }
 
-    private String resolveKey(String keyspace, Object id) {
-        return String.format("%s-%s", keyspace, id);
-    }
-
     private void execUsingBinding(String sql) {
         Map<String, String> meta = Map.of("sql", sql);
 
@@ -245,11 +130,33 @@ public class PostgreSQLDaprKeyValueAdapter implements KeyValueAdapter {
         return daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
     }
 
+    private <T> Iterable<T> convertValues(List<List<Object>> values, Class<T> type) {
+        if (values == null || values.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return values.stream()
+                .flatMap(Collection::stream)
+                .map(value -> convertValue(value, type))
+                .toList();
+    }
+
     private <T> T convertValue(Object value, Class<T> type) {
         try {
             return mapper.convertValue(value, type);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private long extractCount(List<List<Long>> values) {
+        if (values == null || values.isEmpty()) {
+            return 0;
+        }
+
+        return values.stream()
+                .flatMap(Collection::stream)
+                .toList()
+                .get(0);
     }
 }
