@@ -1,12 +1,8 @@
-package io.diagrid.spring.core.kvstore;
+package io.diagrid.spring.core.keyvalue;
 
 import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
-import io.diagrid.BaseIntegrationTest;
-import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapter;
-import io.diagrid.spring.core.keyvalue.DaprKeyValueTemplate;
-import io.diagrid.spring.core.keyvalue.PostgreSQLQueryTranslator;
-import io.diagrid.spring.core.keyvalue.QueryTranslator;
+import io.diagrid.AbstractPostgreSQLBaseIT;
 import io.diagrid.spring.core.keyvalue.repository.EnableDaprRepositories;
 
 import static org.junit.Assert.assertEquals;
@@ -17,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.keyvalue.core.KeyValueAdapter;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -29,7 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
-public class DaprKeyValueRepositoryIT extends BaseIntegrationTest {
+public class DaprKeyValueRepositoryIT extends AbstractPostgreSQLBaseIT {
     
     @Configuration
     @EnableDaprRepositories
@@ -41,15 +36,14 @@ public class DaprKeyValueRepositoryIT extends BaseIntegrationTest {
         }
 
         @Bean
-        public DaprKeyValueAdapter daprKeyValueAdapter(DaprClientBuilder daprClientBuilder, ObjectMapper mapper) {
+        public PostgreSQLDaprKeyValueAdapter daprKeyValueAdapter(DaprClientBuilder daprClientBuilder, ObjectMapper mapper) {
             DaprClient daprClient = daprClientBuilder.build();
-            QueryTranslator queryTranslator = new PostgreSQLQueryTranslator("kvstore");
 
-            return new DaprKeyValueAdapter(daprClient, queryTranslator, mapper, "kvstore", "kvbinding");
+            return new PostgreSQLDaprKeyValueAdapter(daprClient, mapper, STATE_STORE_NAME, BINDING_NAME);
         }
 
         @Bean
-        public DaprKeyValueTemplate daprKeyValueTemplate(DaprKeyValueAdapter daprKeyValueAdapter) {
+        public DaprKeyValueTemplate daprKeyValueTemplate(PostgreSQLDaprKeyValueAdapter daprKeyValueAdapter) {
             return new DaprKeyValueTemplate(daprKeyValueAdapter);
         }
 
@@ -60,16 +54,12 @@ public class DaprKeyValueRepositoryIT extends BaseIntegrationTest {
     
     }
 
-    
-
     @Autowired
     private TestTypeRepository repo;
 
     @Test
     public void testInsertAndQueryDaprKeyValueTemplate() {
-
         TestType saved = repo.save(new TestType(3, "test"));
-
         TestType byId = repo.findById(3).get();
 
         assertEquals(saved, byId);
@@ -83,9 +73,6 @@ public class DaprKeyValueRepositoryIT extends BaseIntegrationTest {
         Iterable<TestType> all = repo.findAll();
 
         assertEquals(1, all.spliterator().getExactSizeIfKnown());
-        
     }
-
-    
 
 }

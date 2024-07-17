@@ -1,15 +1,11 @@
-package io.diagrid.spring.core.kvstore;
+package io.diagrid.spring.core.keyvalue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
-import io.diagrid.BaseIntegrationTest;
+import io.diagrid.AbstractBaseIT;
 import io.diagrid.dapr.DaprContainer;
 import io.diagrid.dapr.QuotedBoolean;
-import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapter;
-import io.diagrid.spring.core.keyvalue.DaprKeyValueTemplate;
-import io.diagrid.spring.core.keyvalue.PostgreSQLQueryTranslator;
-import io.diagrid.spring.core.keyvalue.QueryTranslator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,13 +28,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Integration tests for {@link MySQLDaprKeyValueTemplateIT}.
  */
-public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
+public class MySQLDaprKeyValueTemplateIT extends AbstractBaseIT {
     private static final Logger LOGGER = LoggerFactory.getLogger(MySQLDaprKeyValueTemplateIT.class);
 
     private static final String STATE_STORE_DSN = "mysql:password@tcp(mysql:3306)/";
     private static final String BINDING_DSN = "mysql:password@tcp(mysql:3306)/dapr_db";
-    private static final String STATE_STORE_NAME = "kvstore";
-    private static final String BINDING_NAME = "kvbinding";
     private static final Map<String, Object> STATE_STORE_PROPERTIES = Map.of(
             "keyPrefix", "name",
             "schemaName", "dapr_db",
@@ -63,9 +57,9 @@ public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
     private static final DaprContainer DAPR_CONTAINER = new DaprContainer("daprio/daprd:1.13.2")
             .withAppName("local-dapr-app")
             .withNetwork(DAPR_NETWORK)
-            .withComponent(new DaprContainer.Component("kvstore", "state.mysql", STATE_STORE_PROPERTIES))
-            .withComponent(new DaprContainer.Component("kvbinding", "bindings.mysql", BINDING_PROPERTIES))
-            .withComponent(new DaprContainer.Component("pubsub", "pubsub.in-memory", Collections.emptyMap()))
+            .withComponent(new DaprContainer.Component(STATE_STORE_NAME, "state.mysql", STATE_STORE_PROPERTIES))
+            .withComponent(new DaprContainer.Component(BINDING_NAME, "bindings.mysql", BINDING_PROPERTIES))
+            .withComponent(new DaprContainer.Component(PUBSUB_NAME, "pubsub.in-memory", Collections.emptyMap()))
             .withAppPort(8080)
             .withDaprLogLevel(DaprContainer.DaprLogLevel.debug)
             .withAppChannelAddress("host.testcontainers.internal")
@@ -73,11 +67,9 @@ public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
             .dependsOn(MY_SQL_CONTAINER);
 
     private final DaprClient daprClient = new DaprClientBuilder().build();
-    private final QueryTranslator queryTranslator = new PostgreSQLQueryTranslator(STATE_STORE_NAME);
     private final ObjectMapper mapper = new ObjectMapper();
-    private final DaprKeyValueAdapter daprKeyValueAdapter = new DaprKeyValueAdapter(
+    private final MySQLDaprKeyValueAdapter daprKeyValueAdapter = new MySQLDaprKeyValueAdapter(
             daprClient,
-            queryTranslator,
             mapper,
             STATE_STORE_NAME,
             BINDING_NAME
@@ -95,7 +87,7 @@ public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
     public void tearDown() {
         var meta = Map.of("sql", "delete from state");
 
-        daprClient.invokeBinding("kvbinding", "exec", null, meta).block();
+        daprClient.invokeBinding(BINDING_NAME, "exec", null, meta).block();
     }
 
     @Test
@@ -108,7 +100,7 @@ public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
         assertThat(findById.isEmpty()).isFalse();
         assertThat(findById.get()).isEqualTo(savedType);
 
-        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<>("'content' == 'test'");
+        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<>("content == 'test'");
 
         Iterable<TestType> myTypes = keyValueTemplate.find(keyValueQuery, TestType.class);
         assertThat(myTypes.iterator().hasNext()).isTrue();
@@ -117,7 +109,7 @@ public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
         assertThat(item.getId()).isEqualTo(Integer.valueOf(itemId));
         assertThat(item.getContent()).isEqualTo("test");
 
-        keyValueQuery = new KeyValueQuery<>("'content' == 'asd'");
+        keyValueQuery = new KeyValueQuery<>("content == 'asd'");
 
         myTypes = keyValueTemplate.find(keyValueQuery, TestType.class);
         assertThat(!myTypes.iterator().hasNext()).isTrue();
@@ -132,7 +124,7 @@ public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
             items.add(keyValueTemplate.insert(new TestType(i, "test")));
         }
 
-        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<>("'content' == 'test'");
+        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<>("content == 'test'");
         keyValueQuery.setRows(100);
         keyValueQuery.setOffset(0);
 
@@ -204,7 +196,7 @@ public class MySQLDaprKeyValueTemplateIT extends BaseIntegrationTest {
         TestType insertedType = keyValueTemplate.insert(new TestType(itemId, "test"));
         assertThat(insertedType).isNotNull();
 
-        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<>("'content' == 'test'");
+        KeyValueQuery<String> keyValueQuery = new KeyValueQuery<>("content == 'test'");
         keyValueQuery.setRows(100);
         keyValueQuery.setOffset(0);
 
