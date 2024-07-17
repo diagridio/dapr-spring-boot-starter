@@ -1,7 +1,7 @@
 package io.diagrid.spring.boot.autoconfigure.statestore;
 
 import io.diagrid.spring.boot.autoconfigure.client.DaprClientAutoConfiguration;
-import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapter;
+import io.diagrid.spring.core.keyvalue.PostgreSQLDaprKeyValueAdapter;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueTemplate;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -20,7 +20,7 @@ class DaprStateStoreAutoConfigurationTests {
     @Test
     void daprKeyValueAdapter() {
         contextRunner.run(context -> {
-            assertThat(context).hasSingleBean(DaprKeyValueAdapter.class);
+            assertThat(context).hasSingleBean(PostgreSQLDaprKeyValueAdapter.class);
         });
     }
 

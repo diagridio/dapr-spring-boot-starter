@@ -18,7 +18,7 @@ import org.springframework.data.repository.config.RepositoryConfigurationExtensi
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.lang.Nullable;
 
-import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapter;
+import io.diagrid.spring.core.keyvalue.PostgreSQLDaprKeyValueAdapter;
 
 /**
  * {@link RepositoryConfigurationExtension} for Dapr-based repositories.
@@ -46,7 +46,7 @@ public class DaprRepositoryConfigurationExtension extends KeyValueRepositoryConf
 	protected AbstractBeanDefinition getDefaultKeyValueTemplateBeanDefinition(
 			RepositoryConfigurationSource configurationSource) {
 
-		BeanDefinitionBuilder adapterBuilder = BeanDefinitionBuilder.rootBeanDefinition(DaprKeyValueAdapter.class);
+		BeanDefinitionBuilder adapterBuilder = BeanDefinitionBuilder.rootBeanDefinition(PostgreSQLDaprKeyValueAdapter.class);
 		//adapterBuilder.addConstructorArgValue(getMapTypeToUse(configurationSource));
 
 		SortAccessor<?> sortAccessor = getSortAccessor(configurationSource);

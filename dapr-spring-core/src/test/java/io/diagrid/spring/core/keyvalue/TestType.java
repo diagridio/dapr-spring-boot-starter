@@ -1,4 +1,4 @@
-package io.diagrid.spring.core.kvstore;
+package io.diagrid.spring.core.keyvalue;
 
 import org.springframework.data.annotation.Id;
 
