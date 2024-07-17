@@ -32,18 +32,18 @@ public class MySQLDaprKeyValueAdapter extends AbstractDaprKeyValueAdapter {
     private final DaprClient daprClient;
     private final ObjectMapper mapper;
     private final String stateStoreName;
-    private final String stateStoreBinding;
+    private final String bindingName;
 
-    public MySQLDaprKeyValueAdapter(DaprClient daprClient, ObjectMapper mapper, String stateStoreName, String stateStoreBinding) {
+    public MySQLDaprKeyValueAdapter(DaprClient daprClient, ObjectMapper mapper, String stateStoreName, String bindingName) {
         super(daprClient, stateStoreName);
 
         Assert.notNull(mapper, "ObjectMapper must not be null");
-        Assert.hasText(stateStoreBinding, "State store binding must not be empty");
+        Assert.hasText(bindingName, "State store binding must not be empty");
 
         this.daprClient = daprClient;
         this.mapper = mapper;
         this.stateStoreName = stateStoreName;
-        this.stateStoreBinding = stateStoreBinding;
+        this.bindingName = bindingName;
     }
 
 
@@ -124,13 +124,13 @@ public class MySQLDaprKeyValueAdapter extends AbstractDaprKeyValueAdapter {
     private void execUsingBinding(String sql) {
         Map<String, String> meta = Map.of("sql", sql);
 
-        daprClient.invokeBinding(stateStoreBinding, "exec", null, meta).block();
+        daprClient.invokeBinding(bindingName, "exec", null, meta).block();
     }
 
     private <T> T queryUsingBinding(String sql, TypeRef<T> typeRef) {
         Map<String, String> meta = Map.of("sql", sql);
 
-        return daprClient.invokeBinding(stateStoreBinding, "query", null, meta, typeRef).block();
+        return daprClient.invokeBinding(bindingName, "query", null, meta, typeRef).block();
     }
 
     private <T> List<T> convertValues(List<JsonNode> values, Class<T> type) {

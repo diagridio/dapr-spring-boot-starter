@@ -36,15 +36,15 @@ public class DaprKeyValueRepositoryIT extends AbstractPostgreSQLBaseIT {
         }
 
         @Bean
-        public PostgreSQLDaprKeyValueAdapter daprKeyValueAdapter(DaprClientBuilder daprClientBuilder, ObjectMapper mapper) {
+        public KeyValueAdapterResolver keyValueAdapterResolver(DaprClientBuilder daprClientBuilder, ObjectMapper mapper) {
             DaprClient daprClient = daprClientBuilder.build();
 
-            return new PostgreSQLDaprKeyValueAdapter(daprClient, mapper, STATE_STORE_NAME, BINDING_NAME);
+            return new DaprKeyValueAdapterResolver(daprClient, mapper, STATE_STORE_NAME, BINDING_NAME);
         }
 
         @Bean
-        public DaprKeyValueTemplate daprKeyValueTemplate(PostgreSQLDaprKeyValueAdapter daprKeyValueAdapter) {
-            return new DaprKeyValueTemplate(daprKeyValueAdapter);
+        public DaprKeyValueTemplate daprKeyValueTemplate(KeyValueAdapterResolver keyValueAdapterResolver) {
+            return new DaprKeyValueTemplate(keyValueAdapterResolver);
         }
 
         @Bean
