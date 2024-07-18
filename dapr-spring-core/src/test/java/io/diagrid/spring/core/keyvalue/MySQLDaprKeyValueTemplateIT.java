@@ -68,7 +68,7 @@ public class MySQLDaprKeyValueTemplateIT extends AbstractBaseIT {
 
     private final DaprClient daprClient = new DaprClientBuilder().build();
     private final ObjectMapper mapper = new ObjectMapper();
-    private final MySQLDaprKeyValueAdapter daprKeyValueAdapter = new MySQLDaprKeyValueAdapter(
+    private final KeyValueAdapterResolver daprKeyValueAdapter = new DaprKeyValueAdapterResolver(
             daprClient,
             mapper,
             STATE_STORE_NAME,

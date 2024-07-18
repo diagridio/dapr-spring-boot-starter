@@ -23,7 +23,7 @@ public class PostgreSQLDaprKeyValueTemplateIT extends AbstractPostgreSQLBaseIT {
 
     private final DaprClient daprClient = new DaprClientBuilder().build();
     private final ObjectMapper mapper = new ObjectMapper();
-    private final PostgreSQLDaprKeyValueAdapter daprKeyValueAdapter = new PostgreSQLDaprKeyValueAdapter(
+    private final KeyValueAdapterResolver daprKeyValueAdapter = new DaprKeyValueAdapterResolver(
             daprClient,
             mapper,
             STATE_STORE_NAME,

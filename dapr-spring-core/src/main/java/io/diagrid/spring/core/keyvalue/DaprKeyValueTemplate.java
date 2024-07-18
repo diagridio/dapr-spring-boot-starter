@@ -44,41 +44,41 @@ public class DaprKeyValueTemplate implements KeyValueOperations, ApplicationEven
             .emptySet();
 
     /**
-     * Create new {@link DaprKeyValueTemplate} using the given {@link KeyValueAdapter} with a default
+     * Create new {@link DaprKeyValueTemplate} using the given {@link KeyValueAdapterResolver} with a default
      * {@link KeyValueMappingContext}.
      *
-     * @param adapter must not be {@literal null}.
+     * @param resolver must not be {@literal null}.
      */
-    public DaprKeyValueTemplate(KeyValueAdapter adapter) {
-        this(adapter, new KeyValueMappingContext<>());
+    public DaprKeyValueTemplate(KeyValueAdapterResolver resolver) {
+        this(resolver, new KeyValueMappingContext<>());
     }
 
     /**
-     * Create new {@link DaprKeyValueTemplate} using the given {@link KeyValueAdapter} and {@link MappingContext}.
+     * Create new {@link DaprKeyValueTemplate} using the given {@link KeyValueAdapterResolver} and {@link MappingContext}.
      *
-     * @param adapter must not be {@literal null}.
+     * @param resolver must not be {@literal null}.
      * @param mappingContext must not be {@literal null}.
      */
-    public DaprKeyValueTemplate(KeyValueAdapter adapter,
-                            MappingContext<? extends KeyValuePersistentEntity<?, ?>, ? extends KeyValuePersistentProperty<?>> mappingContext) {
-        this(adapter, mappingContext, DefaultIdentifierGenerator.INSTANCE);
+    public DaprKeyValueTemplate(KeyValueAdapterResolver resolver,
+                                MappingContext<? extends KeyValuePersistentEntity<?, ?>, ? extends KeyValuePersistentProperty<?>> mappingContext) {
+        this(resolver, mappingContext, DefaultIdentifierGenerator.INSTANCE);
     }
 
     /**
-     * Create new {@link DaprKeyValueTemplate} using the given {@link KeyValueAdapter} and {@link MappingContext}.
+     * Create new {@link DaprKeyValueTemplate} using the given {@link KeyValueAdapterResolver} and {@link MappingContext}.
      *
-     * @param adapter must not be {@literal null}.
+     * @param resolver must not be {@literal null}.
      * @param mappingContext must not be {@literal null}.
      * @param identifierGenerator must not be {@literal null}.
      */
-    public DaprKeyValueTemplate(KeyValueAdapter adapter,
-                            MappingContext<? extends KeyValuePersistentEntity<?, ?>, ? extends KeyValuePersistentProperty<?>> mappingContext,
-                            IdentifierGenerator identifierGenerator) {
-        Assert.notNull(adapter, "Adapter must not be null");
+    public DaprKeyValueTemplate(KeyValueAdapterResolver resolver,
+                                MappingContext<? extends KeyValuePersistentEntity<?, ?>, ? extends KeyValuePersistentProperty<?>> mappingContext,
+                                IdentifierGenerator identifierGenerator) {
+        Assert.notNull(resolver, "Resolver must not be null");
         Assert.notNull(mappingContext, "MappingContext must not be null");
         Assert.notNull(identifierGenerator, "IdentifierGenerator must not be null");
 
-        this.adapter = adapter;
+        this.adapter = resolver.resolve();
         this.mappingContext = mappingContext;
         this.identifierGenerator = identifierGenerator;
     }
