@@ -8,6 +8,8 @@ import io.diagrid.spring.core.keyvalue.repository.EnableDaprRepositories;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +59,13 @@ public class DaprKeyValueRepositoryIT extends AbstractPostgreSQLBaseIT {
     @Autowired
     private TestTypeRepository repo;
 
+    /*
+     * we should test that: 
+     * - We can store multiple entities
+     * - Count them and retrieve them using pagination from the CrudRepository
+     * - Filter entities by properties values (we should be able to extend the Repository definition with custom queries)
+     * - Delete entities by ID
+     */
     @Test
     public void testInsertAndQueryDaprKeyValueTemplate() {
         TestType saved = repo.save(new TestType(3, "test"));
@@ -70,9 +79,17 @@ public class DaprKeyValueRepositoryIT extends AbstractPostgreSQLBaseIT {
         boolean existsById2 = repo.existsById(4);
         assertTrue(!existsById2);
 
+        TestType saved2 = repo.save(new TestType(4, "test2"));
+        existsById2 = repo.existsById(4);
+        assertTrue(!existsById2);
+
         Iterable<TestType> all = repo.findAll();
 
-        assertEquals(1, all.spliterator().getExactSizeIfKnown());
+        assertEquals(2, all.spliterator().getExactSizeIfKnown());
+
+        List<TestType> byContent = repo.findByContent("test2");
+
+        assertEquals(1, byContent.size());
     }
 
 }
