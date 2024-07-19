@@ -1,3 +1,16 @@
+/*
+ * Copyright 2024 The Dapr Authors
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package io.diagrid.spring.boot.autoconfigure.client;
 
 import io.dapr.client.DaprClient;
@@ -13,19 +26,19 @@ import org.springframework.context.annotation.Bean;
 @ConditionalOnClass(DaprClient.class)
 public class DaprClientAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean
-    DaprClientBuilderConfigurer daprClientBuilderConfigurer(ObjectProvider<DaprClientCustomizer> customizerProvider) {
-        DaprClientBuilderConfigurer configurer = new DaprClientBuilderConfigurer();
-        configurer.setDaprClientCustomizer(customizerProvider.orderedStream().toList());
-        return configurer;
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  DaprClientBuilderConfigurer daprClientBuilderConfigurer(ObjectProvider<DaprClientCustomizer> customizerProvider) {
+    DaprClientBuilderConfigurer configurer = new DaprClientBuilderConfigurer();
+    configurer.setDaprClientCustomizer(customizerProvider.orderedStream().toList());
+    return configurer;
+  }
 
-    @Bean
-    @ConditionalOnMissingBean
-    DaprClientBuilder daprClientBuilder(DaprClientBuilderConfigurer daprClientBuilderConfigurer) {
-        var daprClientBuilder = new DaprClientBuilder();
-        return daprClientBuilderConfigurer.configure(daprClientBuilder);
-    }
+  @Bean
+  @ConditionalOnMissingBean
+  DaprClientBuilder daprClientBuilder(DaprClientBuilderConfigurer daprClientBuilderConfigurer) {
+    var daprClientBuilder = new DaprClientBuilder();
+    return daprClientBuilderConfigurer.configure(daprClientBuilder);
+  }
 
 }

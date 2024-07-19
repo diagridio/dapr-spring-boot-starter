@@ -1,9 +1,11 @@
 {
-    "filter": {
-        "EQ": { "content": "test" }
-    },
-    "page": {
-        "limit": 0,
-        "token": "0" 
+  "filter": {
+    "EQ": {
+      "content": "test"
     }
+  },
+  "page": {
+    "limit": 0,
+    "token": "0"
+  }
 }
