@@ -276,6 +276,7 @@ public class PredicateQueryCreator extends AbstractQueryCreator<KeyValueQuery<Pr
         private final Function<Object, Boolean> check;
         private final Object value;
 
+        //@TODO: we can store the operation here to expand the query string with multiple operations
         public ValueComparingPredicate(PropertyPath path, Object expected) {
             this(path, expected, (valueToCompare) -> ObjectUtils.nullSafeEquals(valueToCompare, expected));
         }
