@@ -4,6 +4,7 @@ package io.diagrid.spring.core.keyvalue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dapr.client.DaprClient;
 import io.dapr.utils.TypeRef;
+import io.diagrid.spring.core.keyvalue.repository.PredicateQueryCreator;
 import org.springframework.data.keyvalue.core.query.KeyValueQuery;
 import org.springframework.expression.spel.SpelNode;
 import org.springframework.expression.spel.standard.SpelExpression;
@@ -108,13 +109,20 @@ public class PostgreSQLDaprKeyValueAdapter extends AbstractDaprKeyValueAdapter {
 
     private String createSql(String sqlPattern, String keyspace, KeyValueQuery<?> query) {
         String keyspaceFilter = getKeyspaceFilter(keyspace);
-        SpelExpression expression = PARSER.parseRaw(query.getCriteria().toString());
-        SpelNode leftNode = expression.getAST().getChild(0);
-        SpelNode rightNode = expression.getAST().getChild(1);
-        String left = String.format("'%s'", leftNode.toStringAST());
-        String right = rightNode.toStringAST();
-
-        return String.format(sqlPattern, keyspaceFilter, left, right);
+        if (query.getCriteria() instanceof PredicateQueryCreator.ValueComparingPredicate){
+            String path = ((PredicateQueryCreator.ValueComparingPredicate)query.getCriteria()).getPath().toString();
+            String pathWithOutType = String.format("'%s'",path.substring(path.indexOf(".") + 1, path.length()));
+            String value = String.format("'%s'",((PredicateQueryCreator.ValueComparingPredicate)query.getCriteria()).getValue().toString());
+            return String.format(sqlPattern, keyspaceFilter, pathWithOutType, value);
+        }else if(query.getCriteria() instanceof String) {
+            SpelExpression expression = PARSER.parseRaw(query.getCriteria().toString());
+            SpelNode leftNode = expression.getAST().getChild(0);
+            SpelNode rightNode = expression.getAST().getChild(1);
+            String left = String.format("'%s'", leftNode.toStringAST());
+            String right = rightNode.toStringAST();
+            return String.format(sqlPattern, keyspaceFilter, left, right);
+        }
+        return null;
     }
 
     private void execUsingBinding(String sql) {

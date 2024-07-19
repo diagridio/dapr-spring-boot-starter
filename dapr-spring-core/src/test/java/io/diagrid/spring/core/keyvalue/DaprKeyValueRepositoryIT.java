@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,15 +82,17 @@ public class DaprKeyValueRepositoryIT extends AbstractPostgreSQLBaseIT {
 
         TestType saved2 = repo.save(new TestType(4, "test2"));
         existsById2 = repo.existsById(4);
-        assertTrue(!existsById2);
+        assertTrue(existsById2);
 
         Iterable<TestType> all = repo.findAll();
 
         assertEquals(2, all.spliterator().getExactSizeIfKnown());
 
+        // Filter using Repository extensions specific to this TestType object
         List<TestType> byContent = repo.findByContent("test2");
 
         assertEquals(1, byContent.size());
+
     }
 
 }

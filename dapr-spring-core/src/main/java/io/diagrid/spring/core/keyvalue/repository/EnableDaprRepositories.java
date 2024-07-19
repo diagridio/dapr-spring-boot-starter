@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.keyvalue.core.KeyValueOperations;
 import org.springframework.data.keyvalue.core.SortAccessor;
 import org.springframework.data.keyvalue.repository.config.QueryCreatorType;
-import org.springframework.data.keyvalue.repository.query.PredicateQueryCreator;
 import org.springframework.data.keyvalue.repository.support.KeyValueRepositoryFactoryBean;
 import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
 import org.springframework.data.repository.query.QueryLookupStrategy;
