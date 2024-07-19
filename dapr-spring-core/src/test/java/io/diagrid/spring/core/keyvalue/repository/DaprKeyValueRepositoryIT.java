@@ -21,6 +21,7 @@ import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapterResolver;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueTemplate;
 import io.diagrid.spring.core.keyvalue.KeyValueAdapterResolver;
 import io.diagrid.spring.core.keyvalue.TestType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,11 @@ public class DaprKeyValueRepositoryIT extends AbstractPostgreSQLBaseIT {
 
   @Autowired
   private TestTypeRepository repository;
+
+  @BeforeEach
+  public void setUp() {
+    repository.deleteAll();
+  }
 
   @Test
   public void testFindById() {
