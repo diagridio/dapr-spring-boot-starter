@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -10,15 +10,15 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
-	<groupId>io.diagrid.dapr</groupId>
-	<artifactId>dapr-spring-boot</artifactId>
-	<version>0.11.0-SNAPSHOT</version>
+    <groupId>io.diagrid.dapr</groupId>
+    <artifactId>dapr-spring-boot</artifactId>
+    <version>0.11.0-SNAPSHOT</version>
 
-	<name>Dapr Spring Boot</name>
-	<description>Dapr Spring Boot</description>
+    <name>Dapr Spring Boot</name>
+    <description>Dapr Spring Boot</description>
 
-	<packaging>pom</packaging>
-	<url>https://github.com/diagridio/spring-boot-starter-dapr</url>
+    <packaging>pom</packaging>
+    <url>https://github.com/diagridio/spring-boot-starter-dapr</url>
 
     <modules>
         <module>dapr-spring-boot-autoconfigure</module>
@@ -39,7 +39,7 @@
         <developer>
             <name>Mauricio Salatino</name>
             <email>salaboy@gmail.com</email>
-			<organization>Diagrid</organization>
+            <organization>Diagrid</organization>
             <organizationUrl>https://www.diagrid.io</organizationUrl>
         </developer>
     </developers>
@@ -51,31 +51,69 @@
         <tag>main</tag>
     </scm>
 
-	<properties>
+    <properties>
         <java.version>17</java.version>
 
-		<daprsdk.version>1.12.0-SNAPSHOT</daprsdk.version>
+        <daprsdk.version>1.12.0-SNAPSHOT</daprsdk.version>
         <dapr-workflows-sdk.version>0.11.0</dapr-workflows-sdk.version>
-		<testcontainers-dapr.version>0.10.14</testcontainers-dapr.version>
+        <testcontainers-dapr.version>0.10.14</testcontainers-dapr.version>
         <testcontainers-test.version>1.19.8</testcontainers-test.version>
 
-		<maven-source-plugin.version>3.3.0</maven-source-plugin.version>
-		<maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
-		<jreleaser.version>1.8.0</jreleaser.version>
-	</properties>
+        <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+        <maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
+        <jreleaser.version>1.8.0</jreleaser.version>
+    </properties>
 
-	<distributionManagement>
-		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
-		<repository>
-			<id>ossrh</id>
-			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-	</distributionManagement>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
-	<profiles>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <consoleOutput>true</consoleOutput>
+                    <violationSeverity>warning</violationSeverity>
+                    <failOnViolation>true</failOnViolation>
+                    <failsOnError>true</failsOnError>
+                    <linkXRef>false</linkXRef>
+                    <sourceDirectories>
+                        <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                        <sourceDirectory>${project.build.testSourceDirectory}</sourceDirectory>
+                    </sourceDirectories>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>10.17.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
         <profile>
             <id>release</id>
             <build>
@@ -110,14 +148,14 @@
                         <groupId>org.jreleaser</groupId>
                         <artifactId>jreleaser-maven-plugin</artifactId>
                         <version>${jreleaser.version}</version>
-                         <configuration>
+                        <configuration>
                             <jreleaser>
-								<project>
-									<description>Dapr Spring Boot Starter</description>
-									<copyright>2023 Diagrid.io</copyright>
-									<authors>Mauricio Salatino</authors>
-									<license>APACHE-2.0</license>
-								</project>
+                                <project>
+                                    <description>Dapr Spring Boot Starter</description>
+                                    <copyright>2023 Diagrid.io</copyright>
+                                    <authors>Mauricio Salatino</authors>
+                                    <license>APACHE-2.0</license>
+                                </project>
                                 <signing>
                                     <active>ALWAYS</active>
                                     <armored>true</armored>
@@ -128,7 +166,9 @@
                                             <maven-central>
                                                 <active>ALWAYS</active>
                                                 <url>https://s01.oss.sonatype.org/service/local</url>
-                                                <snapshotUrl>https://s01.oss.sonatype.org/content/repositories/snapshots</snapshotUrl>
+                                                <snapshotUrl>
+                                                    https://s01.oss.sonatype.org/content/repositories/snapshots
+                                                </snapshotUrl>
                                                 <closeRepository>true</closeRepository>
                                                 <releaseRepository>true</releaseRepository>
                                                 <stagingRepositories>target/staging-deploy</stagingRepositories>

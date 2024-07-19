@@ -1,8 +1,19 @@
+/*
+ * Copyright 2024 The Dapr Authors
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package io.diagrid.spring.core.keyvalue.repository;
 
-
-import java.util.Map;
-
+import io.diagrid.spring.core.keyvalue.PostgreSQLDaprKeyValueAdapter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
@@ -11,113 +22,85 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.config.ParsingUtils;
 import org.springframework.data.keyvalue.core.KeyValueTemplate;
 import org.springframework.data.keyvalue.core.QueryEngine;
-// import org.springframework.data.keyvalue.core.QueryEngineFactory;
 import org.springframework.data.keyvalue.core.SortAccessor;
 import org.springframework.data.keyvalue.repository.config.KeyValueRepositoryConfigurationExtension;
 import org.springframework.data.repository.config.RepositoryConfigurationExtension;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.lang.Nullable;
 
-import io.diagrid.spring.core.keyvalue.PostgreSQLDaprKeyValueAdapter;
+import java.util.Map;
 
 /**
  * {@link RepositoryConfigurationExtension} for Dapr-based repositories.
- *
  */
 @SuppressWarnings("unchecked")
 public class DaprRepositoryConfigurationExtension extends KeyValueRepositoryConfigurationExtension {
 
-	@Override
-	public String getModuleName() {
-		return "Dapr";
-	}
+  @Nullable
+  private static SortAccessor<?> getSortAccessor(RepositoryConfigurationSource source) {
 
-	@Override
-	protected String getModulePrefix() {
-		return "dapr";
-	}
+    Class<? extends SortAccessor<?>> sortAccessorType = (Class<? extends SortAccessor<?>>) getAnnotationAttributes(
+        source).get("sortAccessor");
 
-	@Override
-	protected String getDefaultKeyValueTemplateRef() {
-		return "daprKeyValueTemplate";
-	}
+    if (sortAccessorType != null && !sortAccessorType.isInterface()) {
+      return BeanUtils.instantiateClass(sortAccessorType);
+    }
 
-	@Override
-	protected AbstractBeanDefinition getDefaultKeyValueTemplateBeanDefinition(
-			RepositoryConfigurationSource configurationSource) {
+    return null;
+  }
 
-		BeanDefinitionBuilder adapterBuilder = BeanDefinitionBuilder.rootBeanDefinition(PostgreSQLDaprKeyValueAdapter.class);
-		//adapterBuilder.addConstructorArgValue(getMapTypeToUse(configurationSource));
+  private static Map<String, Object> getAnnotationAttributes(RepositoryConfigurationSource source) {
 
-		SortAccessor<?> sortAccessor = getSortAccessor(configurationSource);
-		QueryEngine<?, ?, ?> queryEngine = getQueryEngine(sortAccessor, configurationSource);
+    AnnotationMetadata annotationSource = (AnnotationMetadata) source.getSource();
 
-		if (queryEngine != null) {
-			adapterBuilder.addConstructorArgValue(queryEngine);
-		} else if (sortAccessor != null) {
-			adapterBuilder.addConstructorArgValue(sortAccessor);
-		}
+    if (annotationSource == null) {
+      throw new IllegalArgumentException("AnnotationSource not available");
+    }
 
-		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(KeyValueTemplate.class);
-		builder
-				.addConstructorArgValue(ParsingUtils.getSourceBeanDefinition(adapterBuilder, configurationSource.getSource()));
-		builder.setRole(BeanDefinition.ROLE_SUPPORT);
+    Map<String, Object> annotationAttributes = annotationSource
+        .getAnnotationAttributes(EnableDaprRepositories.class.getName());
 
-		return ParsingUtils.getSourceBeanDefinition(builder, configurationSource.getSource());
-	}
+    if (annotationAttributes == null) {
+      throw new IllegalStateException("No annotation attributes for @EnableDaprRepositories");
+    }
 
+    return annotationAttributes;
+  }
 
-	@Nullable
-	private static SortAccessor<?> getSortAccessor(RepositoryConfigurationSource source) {
+  @Override
+  public String getModuleName() {
+    return "Dapr";
+  }
 
-		Class<? extends SortAccessor<?>> sortAccessorType = (Class<? extends SortAccessor<?>>) getAnnotationAttributes(
-				source).get("sortAccessor");
+  @Override
+  protected String getModulePrefix() {
+    return "dapr";
+  }
 
-		if (sortAccessorType != null && !sortAccessorType.isInterface()) {
-			return BeanUtils.instantiateClass(sortAccessorType);
-		}
+  @Override
+  protected String getDefaultKeyValueTemplateRef() {
+    return "daprKeyValueTemplate";
+  }
 
-		return null;
-	}
+  @Override
+  protected AbstractBeanDefinition getDefaultKeyValueTemplateBeanDefinition(
+      RepositoryConfigurationSource configurationSource) {
 
-	@Nullable
-	private static QueryEngine<?, ?, ?> getQueryEngine(@Nullable SortAccessor<?> sortAccessor,
-			RepositoryConfigurationSource source) {
+    BeanDefinitionBuilder adapterBuilder =
+        BeanDefinitionBuilder.rootBeanDefinition(PostgreSQLDaprKeyValueAdapter.class);
+    //adapterBuilder.addConstructorArgValue(getMapTypeToUse(configurationSource));
 
-		// Class<? extends QueryEngineFactory> queryEngineFactoryType = (Class<? extends QueryEngineFactory>) getAnnotationAttributes(
-		// 		source).get("queryEngineFactory");
+    SortAccessor<?> sortAccessor = getSortAccessor(configurationSource);
 
-		// if(queryEngineFactoryType == null || queryEngineFactoryType.isInterface()) {
-		// 	return null;
-		// }
+    if (sortAccessor != null) {
+      adapterBuilder.addConstructorArgValue(sortAccessor);
+    }
 
-		// if (sortAccessor != null) {
-		// 	Constructor<? extends QueryEngineFactory> constructor = ClassUtils
-		// 			.getConstructorIfAvailable(queryEngineFactoryType, SortAccessor.class);
-		// 	if (constructor != null) {
-		// 		return BeanUtils.instantiateClass(constructor, sortAccessor).create();
-		// 	}
-		// }
+    BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(KeyValueTemplate.class);
+    builder
+        .addConstructorArgValue(ParsingUtils.getSourceBeanDefinition(adapterBuilder, configurationSource.getSource()));
+    builder.setRole(BeanDefinition.ROLE_SUPPORT);
 
-		// return BeanUtils.instantiateClass(queryEngineFactoryType).create();
-        return null;
-	}
-
-	private static Map<String, Object> getAnnotationAttributes(RepositoryConfigurationSource source) {
-
-		AnnotationMetadata annotationSource = (AnnotationMetadata) source.getSource();
-
-		if (annotationSource == null) {
-			throw new IllegalArgumentException("AnnotationSource not available");
-		}
-
-		Map<String, Object> annotationAttributes = annotationSource
-				.getAnnotationAttributes(EnableDaprRepositories.class.getName());
-
-		if (annotationAttributes == null) {
-			throw new IllegalStateException("No annotation attributes for @EnableDaprRepositories");
-		}
-
-		return annotationAttributes;
-	}
+    return ParsingUtils.getSourceBeanDefinition(builder, configurationSource.getSource());
+  }
 }

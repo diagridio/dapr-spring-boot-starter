@@ -11,10 +11,15 @@
 limitations under the License.
 */
 
-package io.diagrid.spring.boot.autoconfigure.pubsub;
+package io.diagrid.spring.core.keyvalue.repository;
 
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import io.diagrid.spring.core.keyvalue.TestType;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
-@SpringBootApplication
-public class TestApplication {
+import java.util.List;
+
+@Repository
+public interface TestTypeRepository extends CrudRepository<TestType, Integer> {
+  List<TestType> findByContent(String content);
 }

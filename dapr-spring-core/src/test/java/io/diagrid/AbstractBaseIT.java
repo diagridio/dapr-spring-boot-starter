@@ -1,20 +1,25 @@
+/*
+ * Copyright 2024 The Dapr Authors
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package io.diagrid;
 
-import io.diagrid.dapr.DaprContainer;
-import io.diagrid.dapr.QuotedBoolean;
-import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import java.util.Collections;
-import java.util.Map;
 
 @Testcontainers
 public abstract class AbstractBaseIT {
-    public static final Network DAPR_NETWORK = Network.newNetwork();
-    public static final String STATE_STORE_NAME = "kvstore";
-    public static final String BINDING_NAME = "kvbinding";
-    public static final String PUBSUB_NAME = "pubsub";
+  public static final Network DAPR_NETWORK = Network.newNetwork();
+  public static final String STATE_STORE_NAME = "kvstore";
+  public static final String BINDING_NAME = "kvbinding";
+  public static final String PUBSUB_NAME = "pubsub";
 }
