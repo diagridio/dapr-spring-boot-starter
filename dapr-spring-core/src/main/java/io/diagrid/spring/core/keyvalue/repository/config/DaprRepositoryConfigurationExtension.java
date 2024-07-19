@@ -11,25 +11,30 @@
 limitations under the License.
 */
 
-package io.diagrid.spring.core.keyvalue.repository;
+package io.diagrid.spring.core.keyvalue.repository.config;
 
-import org.springframework.data.repository.config.RepositoryBeanDefinitionRegistrarSupport;
+import org.springframework.data.keyvalue.repository.config.KeyValueRepositoryConfigurationExtension;
 import org.springframework.data.repository.config.RepositoryConfigurationExtension;
 
-import java.lang.annotation.Annotation;
-
 /**
- * Dapr specific {@link RepositoryBeanDefinitionRegistrarSupport} implementation.
+ * {@link RepositoryConfigurationExtension} for Dapr-based repositories.
  */
-public class DaprRepositoriesRegistrar extends RepositoryBeanDefinitionRegistrarSupport {
+@SuppressWarnings("unchecked")
+public class DaprRepositoryConfigurationExtension extends KeyValueRepositoryConfigurationExtension {
 
   @Override
-  protected Class<? extends Annotation> getAnnotation() {
-    return EnableDaprRepositories.class;
+  public String getModuleName() {
+    return "Dapr";
   }
 
   @Override
-  protected RepositoryConfigurationExtension getExtension() {
-    return new DaprRepositoryConfigurationExtension();
+  protected String getModulePrefix() {
+    return "dapr";
   }
+
+  @Override
+  protected String getDefaultKeyValueTemplateRef() {
+    return "daprKeyValueTemplate";
+  }
+
 }

@@ -11,8 +11,9 @@
 limitations under the License.
 */
 
-package io.diagrid.spring.core.keyvalue.repository;
+package io.diagrid.spring.core.keyvalue.repository.config;
 
+import io.diagrid.spring.core.keyvalue.repository.query.DaprPredicateQueryCreator;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
@@ -39,7 +40,7 @@ import java.lang.annotation.Target;
 @Documented
 @Inherited
 @Import(DaprRepositoriesRegistrar.class)
-@QueryCreatorType(PredicateQueryCreator.class)
+@QueryCreatorType(DaprPredicateQueryCreator.class)
 public @interface EnableDaprRepositories {
 
   /**

@@ -21,6 +21,7 @@ import io.diagrid.spring.core.keyvalue.DaprKeyValueAdapterResolver;
 import io.diagrid.spring.core.keyvalue.DaprKeyValueTemplate;
 import io.diagrid.spring.core.keyvalue.KeyValueAdapterResolver;
 import io.diagrid.spring.core.keyvalue.TestType;
+import io.diagrid.spring.core.keyvalue.repository.config.EnableDaprRepositories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
