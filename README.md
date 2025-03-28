@@ -1,6 +1,8 @@
 # Testcontainers Modules for Dapr
 
-Repository hosting the Testcontainers Dapr modules in Java, Go and .NET. 
+**NOTE**: this repository is archived please use: https://github.com/dapr/java-sdk and the  `dapr-spring-boot-starter` published in maven central under groupId: `io.dapr`
+
+This repository host the Testcontainers Dapr modules for Spring Boot. 
 
 ## Java
 
